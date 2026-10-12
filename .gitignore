@@ -1,0 +1,73 @@
+# ---- Secrets and credentials ----
+*.env
+.env
+.env.*
+!.env.example
+secrets/
+*secret*
+*.secret
+credentials
+*.creds
+*.token
+.netrc
+
+# ---- Keys and certificates ----
+*.pem
+*.key
+*.p12
+*.pfx
+*.ppk
+id_rsa
+id_ed25519
+*.kdbx
+known_hosts
+
+# ---- Terraform ----
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# ---- Ansible ----
+*.retry
+.vault_pass
+vault-password
+*.vault-pass
+
+# ---- Python ----
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ---- Logs and temp ----
+*.log
+*.tmp
+*.bak
+
+# ---- OS noise ----
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Desktop.ini
+
+# ---- Editor noise ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+.sanitise-denylist

@@ -1,0 +1,10 @@
+# Copy to .sanitise-denylist (gitignored) and replace with your own values.
+# One fixed string per line. Matching is case-insensitive. Lines are literal,
+# so this comment block must be removed in the real file.
+example-tenant-domain.com
+example-ddns-name.example.net
+admin-username
+dns-profile-id
+drive-serial-1
+device-serial-1
+personal-email-local-part

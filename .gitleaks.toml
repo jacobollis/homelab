@@ -1,0 +1,22 @@
+title = "homelab gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "tailscale-auth-key"
+description = "Tailscale auth or API key"
+regex = '''tskey-(auth|api|client)-[A-Za-z0-9]+-[A-Za-z0-9]+'''
+keywords = ["tskey-"]
+
+[allowlist]
+description = "Allow sanitized placeholders and example files"
+paths = [
+  '''.*\.example$''',
+  '''.*\.sample$''',
+]
+regexes = [
+  '''CHANGEME''',
+  '''REDACTED''',
+  '''PLACEHOLDER''',
+]
