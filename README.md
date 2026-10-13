@@ -1,4 +1,4 @@
-# Fulcrum homelab
+# Fulcrum Homelab
 
 A single-node Proxmox homelab and a Microsoft 365 Business Premium tenant that I build, run and break myself. The homelab is working infrastructure first: my daily desktop, local AI, video editing, monitoring and backups all run on it. The tenant is where I practise endpoint management: Intune, Entra ID, Defender and Purview.
 
