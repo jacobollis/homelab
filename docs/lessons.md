@@ -96,3 +96,22 @@ Operating principles from running this estate. Each one cost me time before I wr
 - **Read admin-only state on a standard-user device with a SYSTEM platform script** that writes to a public folder. Never write secrets to it.
 - **Check SharePoint and OneDrive sharing defaults on any tenant you touch.**
 - **Quote the customer-managed Compliance Manager score,** not the overall figure.
+
+## Gateway, renumber and power
+
+- **Confirm who owns the edge device before designing around it.** My first gateway plan assumed modem mode on an ISP router that was not mine.
+- **Sweep the live estate for the old subnet before a renumber, then list by name what grep cannot see.** The sweep found an NFS export that would have broken every backup, and an export that had silently broken a mount for two months. Database rows, appliance schedulers and DNS services need a check by hand.
+- **Keep the old address as a second address until cleanup.** ifupdown2 takes two `address` lines and netplan takes a list. A session over the old address survives the change.
+- **Statics on one switch keep working through a renumber.** Only traffic leaving the subnet stops.
+- **Restart `pvestatd` along with the cluster services after a Proxmox network change.** Without it, every guest reads as unknown in the API and every guest-down alert fires.
+- **A DNS rewrite can outlive the address it points at.** After the old host address was removed, the UI looked dead because a rewrite still pointed there.
+- **Read the routing table before writing an "allow internet" rule behind another router.** The upstream router's subnet sits in the same zone as the internet.
+- **When you stop a guest to keep it as a rollback, set it not to start at boot in the same step.** Otherwise it comes back after the next reboot.
+- **A probe that cannot read a certificate is invisible to an expiry alert.** Pair every expiry rule with a probe-failure rule, and after adding a probe, check that every expected instance reports.
+- **A host rebuild loses whatever certificate setup lived on the old host.** Check what each service actually serves after a rebuild.
+- **A scrape job that is always down hides the next real one.** Build its exporter or delete the job.
+- **Unprivileged ICMP needs `ping_group_range` or `CAP_NET_RAW`.** A systemd drop-in scopes the capability to one service.
+- **Alertmanager's `group_wait` sets a floor on what ever notifies.** A test outage must outlast the rule's `for`, the group wait and a scrape interval, or it fires and resolves without sending.
+- **Prove an alert by inverting it, then revert in the same sitting.**
+- **A USB device plugged in before its package's udev rule existed keeps the wrong permissions.** Reload the rules and replay the add events.
+- **Put a token on a host without it reaching the screen.** `read -rs` into a variable, check its length, write it with a restrictive umask, unset it, and shred the file once the tool has stored it.

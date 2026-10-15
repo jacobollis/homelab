@@ -16,6 +16,9 @@ This repo is public. My working notes are not. Everything here is rewritten from
 | Account recovery arrangements for break-glass accounts and external identities | Same reason. |
 | Personal account names, purchase records, support tickets, employer details | Not relevant to the work and not mine to publish in some cases. |
 | DNS filtering profile IDs | They let others use or pollute the profile. |
+| DNS stamps and DoH URLs | They embed the DNS profile ID. |
+| WiFi network names, the household's devices, and the ISP router's details | They identify the location and other people. |
+| Purchase details, retailers and prices | Not relevant to the work. |
 
 ## Published deliberately
 
@@ -25,6 +28,8 @@ This repo is public. My working notes are not. Everything here is rewritten from
 - **Error codes, event IDs and log message text.** They are the evidence.
 - **Known gaps and open faults,** described without the identifiers that would make them actionable to someone else. Hiding weaknesses would make this repo less honest, not more secure.
 - **Public test endpoints** used in labs, such as Microsoft's SmartScreen test site and the ECH test site.
+
+Screenshots follow the same rules. Addresses, MACs, serials, account names and device names are redacted before a screenshot is committed.
 
 ## How it is checked
 

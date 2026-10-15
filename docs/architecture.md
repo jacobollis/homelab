@@ -9,13 +9,24 @@
 | Memory | 192 GB DDR5 |
 | Board | ASUS ProArt X870E-Creator |
 | Host console | CPU integrated graphics, so both discrete GPUs are free for passthrough |
-| Uplink | Aquantia AQC113 10G, forced to 2.5G full duplex to match the switch. The onboard Intel I226-V is dead from a known firmware issue on this board family. |
-| Power | CyberPower UPS, USB-attached to the host and monitored with NUT. The shutdown threshold under real load is still to be tuned. |
-| Config tracking | Host configuration under etckeeper, so every change to `/etc` is a git commit |
+| Uplink | Aquantia AQC113 10G, negotiating 2.5G with the switch. The onboard Intel I226-V is dead from a known firmware issue on this board family. |
+| Power | CyberPower UPS on USB, read by NUT. The host shuts down cleanly at 20 minutes of runtime or 30 percent charge. See [Power](#power). |
+| Web UI certificate | Let's Encrypt, issued and renewed by Proxmox's built-in ACME client through a DNS challenge, with a DNS token scoped to one zone. See [case study 10](case-studies.md#10-two-certificate-probes-that-could-not-fail-loudly). |
+| Config tracking | etckeeper versions `/etc` on the monitoring container. It is not installed on the host. An earlier version of this repo said otherwise, which was wrong. |
 
 The host is rebuilt from scratch when needed. The last rebuild was in July 2026, after two NVMe controller hangs.
 
 The host is powered off overnight to save electricity. That decision has consequences for scheduled jobs and for the dead-man's switch. Both are covered in [monitoring and backups](monitoring-and-backups.md).
+
+## Power
+
+- The host, the switch and the gateway sit on the battery outlets of one CyberPower UPS. The NAS has its own UPS, managed by DSM.
+- NUT runs on the host in standalone mode, listening on localhost only. `upsmon` is the primary and triggers the host shutdown.
+- The UPS's own low-battery thresholds were 5 minutes and 10 percent. That is too little time to stop two GPU VMs cleanly and wait on network storage. The driver now ignores the UPS's low-battery signal and raises its own at 20 minutes or 30 percent.
+- At the end of a shutdown the UPS cuts its outlets and restores them when mains returns.
+- Unplug test: the UPS went on battery, NUT logged it, runtime read about 60 minutes at 11 percent load, and the on-battery alert reached Telegram on a three-minute pull.
+- Known limit: the ISP router is not on the UPS, so in a house-wide outage the internet goes too and no alert can leave until power returns.
+- Not yet tested: the full shutdown path end to end, and whether the BIOS boots the host by itself when the UPS restores power.
 
 ## GPU passthrough
 
@@ -80,8 +91,7 @@ A separate NVMe drive in a USB enclosure is a Ventoy boot drive with checksum-ve
 
 | Name | Role |
 |---|---|
-| mon01 | Prometheus, Alertmanager and blackbox_exporter. Hand-installed binaries under one service account, no Docker. |
-| unifi01 | UniFi Network controller for the switch and access point |
+| mon01 | Prometheus, Alertmanager and blackbox_exporter. Hand-installed binaries under one service account, no Docker. etckeeper versions its `/etc`. |
 | tasks01 | Vikunja task manager |
 | khoj01 | Khoj, a self-hosted search and chat over my Obsidian vault. Chat runs on llm01 over the LAN. Search embeddings run locally in the container. |
 
@@ -92,6 +102,7 @@ Each retirement was a decision, not an accident. The reasons are in [decisions](
 - Three gaming VMs. Gaming moved off this host for good.
 - An n8n automation container, a Terraform container and a container-image update watcher.
 - A Hetzner VPS that hosted a self-hosted chat service.
+- The self-hosted UniFi Network controller container. The UniFi gateway now runs the controller. The container is stopped and kept for one week as the rollback, then destroyed.
 - A RHEL 10 VM used for the Intune Linux lab. The lab finished, so the VM was deleted after its Intune and Entra records were removed.
 
 Final backup archives of destroyed guests are kept and protected from pruning.
@@ -102,5 +113,7 @@ Synology DS1525+.
 
 - Backup target for Proxmox, and source for the nightly offsite copy.
 - Tailscale subnet router for the home LAN. It is not an exit node.
+- On its own UPS over USB, with DSM's UPS support enabled.
+- NFS exports are scoped to the single client address that uses each one.
 - Hub for Obsidian vault sync through Syncthing.
 - Let's Encrypt certificate issued and deployed by acme.sh with a DNS challenge. The deploy step creates a throwaway admin account for each run and deletes it afterwards, so no admin password is stored in the deploy config.

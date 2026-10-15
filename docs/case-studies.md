@@ -18,6 +18,8 @@ Each entry gives the symptom, what I checked, what settled it and what changed. 
 
 **Change.** Slot capped at Gen4 in BIOS. Confirmed at the root port with `lspci -vvv` showing `Target Link Speed: 16GT/s`. A load test of 20 model load and unload cycles across the link showed generation between 1 and 4, never 5, with no Xid and no lane errors.
 
+**Since then.** `Llm01GpuAbsent` now alerts if the card is missing at boot, so a failed morning cannot pass unnoticed again. See [monitoring](monitoring-and-backups.md#gpu-absent-alert). The cold-boot record has started.
+
 **Why it is not closed.** One boot failure is one event. The host powers off nightly, so every morning is a cold boot through the failure point. Seven consecutive clean mornings closes it. A second suspect, the card also being the firmware's boot VGA device, is deliberately left unchanged until then, so the result has one variable.
 
 **Also learned.** A previous incident with the same `RmInitAdapter` lines had been credited to a hypervisor-hiding CPU flag. Those lines are what a card produces after falling off the bus. The full VM stop and start that applied the flag also reset the card, and that most likely fixed it. I kept the flag and corrected the record.
@@ -90,13 +92,24 @@ The mistake worth recording: I made three configuration changes before reading t
 
 **Lesson.** A failing test rig proves nothing until a known-good part passes it.
 
-## 10. A renewal task that reported Success for five weeks
+## 10. Two certificate probes that could not fail loudly
 
-The NAS certificate renewal task showed Success every day. The deploy step had been failing for five weeks, and the certificate DSM served expired. A task's status proves only that it exited cleanly.
+**Symptom.** The NAS certificate expired in September 2026 with no warning, although a certificates rule group existed. The NAS's renewal task had shown Success every day while its deploy step failed for five weeks.
 
-Change: rebuilt the deploy to create a throwaway local admin for each run and delete it afterwards, so no admin password is stored, and pointed it at the local HTTP port so deployment never depends on the certificate it replaces. Verified by the certificate DSM actually serves, not the task log.
+**What settled it.** Three separate faults.
 
-Open: the certificate expiry rule did not fire before the expiry. That is on the roadmap.
+- **The renewal.** A task's status proves only that it exited cleanly. I rebuilt the deploy to create a throwaway local admin for each run and delete it afterwards, so no admin password is stored, and pointed it at the local HTTP port so deployment never depends on the certificate it replaces. Verified by the certificate DSM actually serves.
+- **No probe had ever targeted the NAS.** The rule group probed the Proxmox UI and the old UniFi controller only. Found during the renumber's dependency sweep.
+- **The Proxmox probe had failed silently since the July rebuild.** `openssl s_client` showed Proxmox's self-signed certificate. The Let's Encrypt setup from before the rebuild had never been restored, while my notes still said Let's Encrypt. The probe failed TLS verification, so it never produced the expiry metric, so the expiry rule had nothing to evaluate. It was blind, not quiet.
+
+**Change.**
+
+- A NAS probe, resolved through a local hosts entry on the monitoring container. The tailnet name points at an address the monitoring container is not allowed to reach, by design.
+- A real certificate on the Proxmox UI from Proxmox's built-in ACME client, using a DNS challenge and a new DNS token scoped to one zone. The token went onto the host without appearing on screen or in any transcript.
+- A new `CertProbeFailing` rule, so a probe that cannot read its certificate alerts on its own.
+- After each change, I queried the expiry metric and checked that every expected instance appeared.
+
+**Lessons.** Pair every expiry alert with a probe-failure alert. After a rebuild, check what each service actually serves, not what the notes say.
 
 ## 11. A config edit that did nothing, and a red alert lost in the noise
 
@@ -109,3 +122,60 @@ Changes: match on a fixed prefix rather than the full old value, grep the file a
 After the Mac mini was factory reset and re-enrolled, Entra held two device objects for it. The stale one still read compliant and managed, left over from the earlier enrolment. Intune mapped only to the live one.
 
 An orphaned object that claims compliance is a risk if anything ever authenticates as it. Safe sequence: disable the stale object, sign in from the Mac and confirm the sign-in log shows the live device ID passing CA001, then delete the stale object. Entra deletes by object ID, not device ID, which matters when two objects share a display name.
+
+## 13. Renumbering a live estate behind a new gateway
+
+**Goal.** Put a UniFi Cloud Gateway in front of the estate, to learn gateway and firewall work and to unblock VLANs and DHCP reservations.
+
+**The design changed before any work started.** The first plan put the ISP router in modem mode and kept the existing subnet. The ISP router belongs to the household, and other people's devices use it, so modem mode was off the table. With the ISP router still routing, the gateway's WAN takes an address in the old subnet, so the LAN behind it had to move. The result is double NAT and a new private /24, with every static device keeping its last octet.
+
+**Dependency sweep.** Before writing the runbook, I grepped the old subnet across the host, every container, the VMs and the NAS, with secrets masked in the output. It found three dependencies my notes did not hold:
+
+- The NAS exported the backup share to the host by IP. Moving the host without a new export rule would have broken every backup.
+- The NAS exported the AI image share only to llm01's address from August. llm01's mount had been refused for two months, and nothing had noticed.
+- The monitoring container's hosts file held hand-added names that the certificate probes resolve through.
+
+grep cannot see everything, so the runbook also listed by name what had to be checked by hand: Khoj's model URL, which lives in its database, the NAS's task scheduler, and the DNS rewrites at NextDNS and Cloudflare.
+
+**Method.**
+
+- Additive pre-staging first: the new subnet route beside the old one in the Tailscale policy, new NFS export rules, new firewall rules on llm01, and a staged copy of the Prometheus config checked with `promtool`.
+- The host and llm01 kept their old address as a second address until cleanup. A session over the old address survives the change, so `netplan try` could be confirmed, and a management path stayed open to anything not yet moved.
+- One machine at a time, pilot container first, monitoring last.
+- Nine verify gates before cleanup, including a manual backup over the new export, a subnet-route test from a phone on mobile data, and a message sent and received through the relay on the work desktop.
+- A written rollback for each stage.
+
+**What went off script, recorded rather than hidden.**
+
+- I recabled before pre-staging, so the pre-staging ran over a temporary alias on the Mac. Statics on one switch keep talking through a renumber. Only traffic leaving the subnet stops.
+- The runbook restarted the Proxmox cluster service but not `pvestatd`, which left every guest reported as down and raised a false `Llm01Down`.
+- After the old host address was removed, the web UI looked dead. A DNS rewrite still pointed at the old address. The host itself was fine.
+- llm01's Tailscale client came back logged out after hours without DNS. Restarting `tailscaled` restored it with the same identity.
+
+**Outcome.** Every gate passed. Two monitoring targets turned out to have no exporter behind them at all, which led to [case study 15](#15-a-ups-nobody-was-reading). The llm01 image share works for the first time since August.
+
+## 14. Gateway hardening, proved rather than assumed
+
+Each gateway change was checked by its effect, not by the setting page.
+
+- **Encrypted DNS.** The gateway's custom DNS option wants a DNS stamp, not a DoH URL, and rejected the URL. I built the stamp, decoded it to check it, then proved it by resolving a name only a NextDNS rewrite knows, through the gateway. The NextDNS test endpoint confirmed DoH with the gateway's device name.
+- **IPS.** Turned on in Notify and Block. I then checked that Tailscale still made direct connections through double NAT, from an owned device to an exit node and from a phone on mobile data to the Proxmox UI.
+- **Reservations.** The access point was first given a static address inside the DHCP pool, where the gateway could lease the same address to another client. Moved to the static band outside the pool.
+- **Zone-based firewall.** Before writing the Lab policies, I read the gateway's routing table. The ISP router's subnet is a connected network on the WAN side, so it counts as External. A rule allowing Lab to the internet would also have allowed Lab to the ISP router and the household's devices. The Lab policies block that subnet explicitly. See [networking](networking.md#zone-based-firewall-and-the-lab-vlan).
+
+## 15. A UPS nobody was reading
+
+**Symptom.** After the renumber, the `nut` scrape job stayed down. Nothing listened on its port, and no UPS software was installed on the host at all. The UPS had been plugged into the host by USB the whole time, but a power cut would have run the host until the battery died, with no shutdown and no alert.
+
+**Change.**
+
+- Installed NUT. The driver first failed with "insufficient permissions on everything", because the UPS was plugged in before the package's udev rule existed. Reloading udev rules and replaying USB add events fixed it.
+- The UPS firmware reports a different model from the one the USB ID database names. I recorded both and flagged the label check rather than picking one.
+- The UPS's own thresholds were 5 minutes and 10 percent, too little to stop two GPU VMs and wait on network storage. The driver now ignores the UPS's low-battery signal and raises its own at 20 minutes or 30 percent.
+- The `upsmon` password was generated on the host and written into both config files without ever being displayed.
+- Installed a UPS exporter as a hardened systemd service with a dynamic user, after checking its download against the release checksum file.
+- Realigned the runtime alert, which used to fire after the shutdown would already have started.
+
+**Test.** Pulled the UPS's mains plug with the loads on it. NUT logged the switch to battery, with about 60 minutes of runtime at 11 percent load. The first pull was 55 seconds and sent nothing, because the alert resolved inside Alertmanager's group wait. A three-minute pull delivered both messages.
+
+**Still open.** The end-to-end shutdown, and whether the BIOS boots the host by itself when power returns.

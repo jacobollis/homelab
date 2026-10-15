@@ -73,3 +73,39 @@ The NAS already has a password and TOTP. Entra SAML sign-in to it is for hands-o
 ## Single-variable changes on hardware faults
 
 When the GPU riser fault pointed at link speed, a second suspect sat in the same BIOS screen. I changed one setting and left the other until the first result is in. A clean result with two possible causes teaches nothing.
+
+## Double NAT behind the shared ISP router
+
+The ISP router belongs to the household and other people use it, so modem mode is not mine to choose. The gateway sits behind it and everything I own is behind my own firewall. Double NAT costs inbound port forwarding, which I do not use, and IPv6 prefix delegation. Tailscale still connects directly through it.
+
+## A distinctive private range for the LAN
+
+The new LAN is a private /24 away from the default ranges consumer routers use. A Tailscale subnet route for a common range clashes with the local network on almost any network I connect from. A distinctive range avoids that, and later VLANs follow the same numbering.
+
+## Re-adopt the switch and access point, do not migrate the controller
+
+The estate has one switch and one access point, and Ubiquiti's guidance on moving a self-hosted site to a gateway console is thin. Factory reset and fresh adoption took minutes and left nothing half-migrated. The old controller container was stopped, not deleted, as the rollback, and set not to start at boot in the same step.
+
+## Old addresses kept as second addresses until every check passes
+
+The host and llm01 carried both the old and new address during the renumber. Any session over the old address survived each change, and every machine stayed reachable until the cleanup stage. Removing the old address was the last step, after nine verify gates.
+
+## Content filtering stays in NextDNS, not on the gateway
+
+Two filters in series make every blocked-site problem twice as hard to diagnose. The gateway forwards DNS to NextDNS over DoH, so LAN-only devices get the same filtering as the tailnet without a second filter.
+
+## No port forwards and no standing VPN server
+
+Tailscale is the only remote access path. A UniFi VPN server appears only in a time-boxed lab that ends with every server turned off. The brokered VPN found enabled on the gateway is to be turned off on the same principle.
+
+## The lab VLAN cannot be reached from the main network
+
+The default would let the main network start connections into Lab. Nothing there needs to: I manage the lab VM through the Proxmox console and Intune reaches it over the internet. Keeping the default block means a compromised lab device and a compromised main-network device cannot meet in either direction.
+
+## The UPS shuts the host down early
+
+The UPS's own thresholds were 5 minutes and 10 percent. Stopping two GPU VMs and waiting on network storage needs more. The shutdown now starts at 20 minutes of runtime or 30 percent charge. On a battery that gives about 60 minutes at normal load, that still leaves 40 minutes of running time first.
+
+## One DNS token per host for certificate challenges
+
+The Proxmox host got its own DNS token, scoped to one zone with DNS edit and zone read, rather than reusing the token shared by older services. Losing one host's token then exposes one host. The NAS still uses the shared token and is next.
