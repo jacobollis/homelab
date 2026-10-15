@@ -1,11 +1,13 @@
 # Roadmap
 
-Open faults, known gaps and next work, as of 15 October 2026. Listed in priority order within each group.
+Open faults, known gaps and next work, as of the evening of 15 October 2026. Listed in priority order within each group.
 
 ## Done since the last snapshot (12 October)
 
 - UniFi Cloud Gateway in place, LAN renumbered, gateway hardening complete. [Case study 13](case-studies.md#13-renumbering-a-live-estate-behind-a-new-gateway).
-- Zone-based firewall with a Lab zone and five policies. [Networking](networking.md#zone-based-firewall-and-the-lab-vlan).
+- Zone-based firewall with a Lab zone and five policies, and the lab VM moved onto the Lab VLAN with every allow and deny path proved. [Networking](networking.md#zone-based-firewall-and-the-lab-vlan).
+- The gateway's mDNS proxy turned off after a capture showed it reflecting the estate into the lab. [Case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
+- Teleport off, gateway backups copied to the NAS, DHCP reservations for every fixed-MAC client, client names matched to Tailscale names.
 - `Llm01GpuAbsent` alert, built and proved.
 - Certificate alerting fixed: NAS probe added, a real certificate on the Proxmox UI, probe-failure alert added. [Case study 10](case-studies.md#10-two-certificate-probes-that-could-not-fail-loudly).
 - UPS shutdown with NUT, an exporter and an unplug test. [Case study 15](case-studies.md#15-a-ups-nobody-was-reading).
@@ -21,14 +23,13 @@ Open faults, known gaps and next work, as of 15 October 2026. Listed in priority
 
 ## Gateway roadmap
 
-1. **Lab VLAN, stages B to D.** Make the host bridge VLAN-aware, tag the lab VM, then prove it reaches Intune and stays compliant while the Proxmox UI and the NAS stay unreachable from it. Screenshots of the policies and failed tests go into this repo.
-2. Turn off Teleport. Copy the gateway backup to the NAS.
-3. Retire the old UniFi controller container after its rollback week: protected final archive, out of the backup pool, destroyed, its commented probe deleted.
-4. Untrusted desktops in their own zone, allowed only SMB to the NAS, with one application-aware block.
-5. IoT and guest networks, including mDNS for the speakers across VLANs.
-6. WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs, with the WiFi profile delivered to a Mac by Intune.
-7. A time-boxed WireGuard and Teleport lab, torn down afterwards.
-8. A syslog receiver for firewall and IPS logs.
+1. Retire the old UniFi controller container after its rollback week: protected final archive, out of the backup pool, destroyed, its commented probe deleted.
+2. **Next, on a weekend:** untrusted desktops in their own zone, allowed only SMB to the NAS, with one application-aware block. It changes the daily work desktop, so it does not fit a weeknight.
+3. IoT and guest networks. Speakers on an IoT network need mDNS across VLANs, so the proxy goes to Custom with only those networks named.
+4. WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs, with the WiFi profile delivered to a Mac by Intune.
+5. A time-boxed WireGuard and Teleport lab, torn down afterwards.
+6. A syslog receiver for firewall and IPS logs.
+7. Open question: the Lab-to-Gateway block counter rises about 60 a minute with no client on the VLAN. Most likely the gateway's own traffic, not proven.
 
 ## Monitoring and power
 
@@ -66,4 +67,4 @@ Open faults, known gaps and next work, as of 15 October 2026. Listed in priority
 ## Repo
 
 - Publish the Terraform files from the retired infrastructure-as-code container, after a gitleaks pass, so that work has inspectable evidence.
-- Firewall policy and failed-test screenshots from the lab VLAN, with addresses redacted.
+- Firewall policy, deny-test and Intune screenshots from the lab VLAN, taken on 15 October, to add with addresses and device names redacted.

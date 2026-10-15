@@ -109,3 +109,11 @@ The UPS's own thresholds were 5 minutes and 10 percent. Stopping two GPU VMs and
 ## One DNS token per host for certificate challenges
 
 The Proxmox host got its own DNS token, scoped to one zone with DNS edit and zone read, rather than reusing the token shared by older services. Losing one host's token then exposes one host. The NAS still uses the shared token and is next.
+
+## The gateway's mDNS proxy is off
+
+On Auto it reflected service announcements from the main network into the lab VLAN, including device names, addresses and a serial number. My own devices all sit on one network, where mDNS works without a proxy. If a later phase puts speakers on an IoT network, the proxy goes to Custom with only those two networks named, never back to Auto.
+
+## Client names match Tailscale names
+
+Guests appear in UniFi under the same `pve-<guest>` names they carry on the tailnet, so one machine has one name across the gateway, Tailscale and the incident notes.

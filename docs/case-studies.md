@@ -179,3 +179,19 @@ Each gateway change was checked by its effect, not by the setting page.
 **Test.** Pulled the UPS's mains plug with the loads on it. NUT logged the switch to battery, with about 60 minutes of runtime at 11 percent load. The first pull was 55 seconds and sent nothing, because the alert resolved inside Alertmanager's group wait. A three-minute pull delivered both messages.
 
 **Still open.** The end-to-end shutdown, and whether the BIOS boots the host by itself when power returns.
+
+## 16. The gateway announced the estate into the lab
+
+**Symptom.** The Lab-to-Gateway block policy had counted tens of thousands of hits since the morning. The lab VLAN held only one VM. The gateway's flow view showed nothing for that policy, even with logging on.
+
+**What settled it.** The Proxmox bridge is VLAN-aware, so the host can see every VLAN on its trunk. I ran a 60-second `tcpdump` on the trunk filtered to the Lab VLAN, with MAC addresses shown. Only two senders appeared: the lab VM, making ordinary HTTPS connections, and the gateway itself.
+
+The gateway was sending IGMP reports, UniFi discovery packets, and mDNS records **reflected from the main network**. They included names and addresses for my phone and Mac mini, and a speaker's model, MAC address and serial number. The firewall blocked the lab VM from connecting to any of them, but it could still read their names and addresses.
+
+The cause was the gateway's mDNS proxy, set to Auto. On Auto it reflects every network's service announcements into every other network. Firewall policy controls connections. It does not control what the gateway itself announces.
+
+**Change.** mDNS proxy set to Off. The main network is the only one with my own devices on it, and mDNS works within one subnet without a proxy. A second capture showed no reflected records.
+
+**What did not change.** The counter kept rising, about 60 a minute even with the lab VM shut down. So the reflection was a real finding, but it was not what the counter counted. I tested the explanation one variable at a time, proxy off and then the VM off, and kept only what each step showed. The remaining traffic is most likely the gateway's own IGMP and discovery packets on the Lab interface. That is recorded as unproven.
+
+**Lessons.** Segmenting with firewall rules is not the same as isolating a segment. Check what the gateway puts on the wire, not only what it allows through. When a vendor's flow view is empty, capture on the wire before concluding there is no traffic.

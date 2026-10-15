@@ -115,3 +115,14 @@ Operating principles from running this estate. Each one cost me time before I wr
 - **Prove an alert by inverting it, then revert in the same sitting.**
 - **A USB device plugged in before its package's udev rule existed keeps the wrong permissions.** Reload the rules and replay the add events.
 - **Put a token on a host without it reaching the screen.** `read -rs` into a variable, check its length, write it with a restrictive umask, unset it, and shred the file once the tool has stored it.
+
+## Lab VLAN
+
+- **Never put a rollback command in the same run of commands as the checks.** A rollback pasted along with the verification steps undid a change that had passed every check. Give the rollback only when a check fails.
+- **Check the prompt before pasting a test that must run on a specific machine.** A firewall test from the trusted side proves nothing.
+- **Show a deny rule per protocol, not only per address.** Ping allowed and TCP blocked to the same address separates a policy decision from a routing fault.
+- **A VLAN-aware Proxmox host can capture any VLAN on its trunk.** `tcpdump -nn -e -i <nic> vlan <id>` shows every sender's MAC when the gateway UI cannot.
+- **`bridge vlan show` prints one line per VLAN on a full-range trunk.** Use `bridge -c vlan show dev <port>` and cap the output.
+- **Firewall policy controls connections, not what the gateway announces.** An mDNS proxy on Auto reflects every network's services into every other network.
+- **An empty flow view is not proof of no traffic.** Read the policy counter and capture on the wire.
+- **Test an explanation one variable at a time and keep only what changes the result.** Turning the proxy off removed the reflected records but not the counter, so the proxy was a finding, not the cause.

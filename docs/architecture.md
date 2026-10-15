@@ -9,7 +9,7 @@
 | Memory | 192 GB DDR5 |
 | Board | ASUS ProArt X870E-Creator |
 | Host console | CPU integrated graphics, so both discrete GPUs are free for passthrough |
-| Uplink | Aquantia AQC113 10G, negotiating 2.5G with the switch. The onboard Intel I226-V is dead from a known firmware issue on this board family. |
+| Uplink | Aquantia AQC113 10G, negotiating 2.5G with the switch. The bridge on it is VLAN-aware, so guests can be tagged onto any VLAN the switch port trunks. The onboard Intel I226-V is dead from a known firmware issue on this board family. |
 | Power | CyberPower UPS on USB, read by NUT. The host shuts down cleanly at 20 minutes of runtime or 30 percent charge. See [Power](#power). |
 | Web UI certificate | Let's Encrypt, issued and renewed by Proxmox's built-in ACME client through a DNS challenge, with a DNS token scoped to one zone. See [case study 10](case-studies.md#10-two-certificate-probes-that-could-not-fail-loudly). |
 | Config tracking | etckeeper versions `/etc` on the monitoring container. It is not installed on the host. An earlier version of this repo said otherwise, which was wrong. |
@@ -85,7 +85,7 @@ A separate NVMe drive in a USB enclosure is a Ventoy boot drive with checksum-ve
 | llm01 | Ubuntu 24.04 | RTX 5070 Ti | Headless Ollama, `gpt-oss:20b` as the main model with a 32K context. Also hosts Stable Diffusion WebUI Forge, which is stopped unless needed because it competes for VRAM. |
 | work01 | CachyOS, KDE Plasma 6 on Wayland | RTX 5080 (shared) | Daily work desktop, driving a TV. Obsidian synced through Syncthing. |
 | edit01 | Rocky Linux 8.6 | RTX 5080 (shared) | DaVinci Resolve, NVIDIA open kernel module pinned to a known-good version |
-| win11-ap01 | Windows 11 Pro 26H2 | none | Intune lab device. Registered with Autopilot, Entra joined, enrolled, compliant, BitLocker on, Defender onboarded. Disposable by design. |
+| win11-ap01 | Windows 11 Pro 26H2 | none | Intune lab device on its own Lab VLAN and firewall zone. Registered with Autopilot, Entra joined, enrolled, compliant, BitLocker on, Defender onboarded. Disposable by design. |
 
 ### Containers (LXC)
 

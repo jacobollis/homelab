@@ -6,7 +6,9 @@
 flowchart LR
   isp["Shared ISP router<br/>router mode, not mine"] -- "PowerLine pair<br/>100 Mbps cap" --> gw["UniFi Cloud Gateway Ultra"]
   gw --> sw["USW-Flex-2.5G-8 switch"]
-  sw --> pve["fulcrum-pve<br/>VLAN-aware bridge (planned)"]
+  sw -- "trunk: Default untagged,<br/>Lab tagged" --> pve["fulcrum-pve<br/>VLAN-aware bridge"]
+  pve --> vms["Infrastructure guests<br/>Default network"]
+  pve -- "Lab VLAN" --> lab["win11-ap01<br/>Autopilot lab VM"]
   sw --> nas["NAS"]
   sw --> ap["U7 Lite AP"]
   sw --> clients["Mac mini, TV, speakers"]
@@ -28,6 +30,8 @@ flowchart LR
 | Encrypted DNS | DNS-over-HTTPS to my NextDNS profile, configured as a custom DNS stamp | LAN-only devices get the same filtering and rewrites as the tailnet |
 | Content filtering and ad blocking on the gateway | Off | NextDNS already filters. Two filters in series make every blocked-site ticket twice as hard to diagnose. |
 | IPv6 | Off | Prefix delegation needs modem mode, which is not available |
+| mDNS proxy | Off | On Auto it reflected every network's service announcements into the lab VLAN. See [case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab). |
+| Teleport (UniFi's brokered VPN) | Off | Found enabled. Tailscale is the only remote access path. |
 | Internet quality and outage logging | On by default | The evidence base for any request to replace the PowerLine link |
 
 Proof the DNS change took effect: a lookup through the gateway returned an address that only a NextDNS rewrite knows, and the NextDNS test endpoint reported DoH with the gateway's device name.
@@ -70,11 +74,31 @@ Status:
 | Stage | Work | State |
 |---|---|---|
 | A | Lab network, Lab zone, the five policies, Lab added to IPS | Done |
-| B | Make the host's bridge VLAN-aware. The switch port already trunks every VLAN. | Next |
-| C | Tag the lab VM's NIC with the Lab VLAN, keeping its MAC | Planned |
-| D | Boot it, confirm a Lab lease, an Intune sync and compliance, and prove that the Proxmox UI and the NAS's SMB port are unreachable from it | Planned |
+| B | Make the host's bridge VLAN-aware. The switch port already trunks every VLAN. | Done |
+| C | Tag the lab VM's NIC with the Lab VLAN, keeping its MAC | Done |
+| D | Boot it and prove the policies | Done |
 
-One open question from Stage A: right after the network was created, with no client on it, the gateway policies counted a few hundred hits from Lab within minutes. It stopped before the flow log could name a source. The most likely explanation is the gateway's own start-up traffic on the new interface. Logging stays on for that policy until Stage D.
+Stage B was a two-line change to the bridge stanza, made at the console after a backup, with the stanza checked before `ifreload`. The host kept its address, and every guest answered afterwards. The VM's own tap port now carries only the Lab VLAN, untagged.
+
+Stage D evidence, all from the lab VM:
+
+| Test | Expected | Result |
+|---|---|---|
+| DHCP lease | Lab subnet | Leased, gateway on the Lab subnet |
+| Ping to the gateway | Allowed by the ICMP policy | 3 of 3 |
+| DNS through the gateway | Allowed | Microsoft sign-in name resolved |
+| TCP 443 to Microsoft sign-in | Allowed (internet) | Succeeded |
+| TCP 8006 to the Proxmox UI | Blocked (Internal) | Failed |
+| TCP 445 to the NAS | Blocked (Internal) | Failed |
+| TCP 443 to the gateway | Blocked (Gateway) | Failed |
+| TCP 80 to the ISP router | Blocked (ISP LAN) | Failed |
+| Intune | Syncs and stays compliant | Checked in, Compliant, 12 of 12 configuration and 2 of 2 compliance settings succeeded |
+
+Ping to the gateway succeeded while TCP 443 to the same address failed. That shows a policy decision, not a routing fault. The policy counters moved with each test.
+
+The lab VM now has a DHCP reservation on the Lab network. Its logging was turned off once the tests were done.
+
+One question stays open. The Lab-to-Gateway block policy counts about 60 hits a minute even with the lab VM shut down. A packet capture on the host trunk showed only the gateway itself sending on that VLAN: IGMP and UniFi discovery traffic. The counter is most likely the gateway's own traffic on the Lab interface. That is not proven, and it is recorded as an open question rather than an answer. How the capture also found the mDNS problem is [case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
 
 Later phases, in order: untrusted desktops in their own zone with only the SMB port to the NAS allowed, an IoT and guest phase, WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs delivered to a Mac through an Intune WiFi profile, and a time-boxed VPN lab that ends with every server turned off.
 
@@ -120,7 +144,6 @@ Known weaknesses, recorded rather than hidden:
 
 - The auto-approver for the home subnet route approves it for any `tag:infra` node, not only the NAS. It matters only after an infra node is compromised. The fix is a dedicated tag for the subnet router.
 - An SSH rule to the exit nodes has no matching network grant, so it is probably inert. To be tested and either fixed or deleted.
-- UniFi's brokered VPN, Teleport, was found enabled on the gateway. No standing VPN server belongs outside the VPN lab, so it is to be turned off.
 
 Two Tailscale behaviours that cost me time:
 
