@@ -117,3 +117,11 @@ On Auto it reflected service announcements from the main network into the lab VL
 ## Client names match Tailscale names
 
 Guests appear in UniFi under the same `pve-<guest>` names they carry on the tailnet, so one machine has one name across the gateway, Tailscale and the incident notes.
+
+## The desktop VMs get a LAN zone that mirrors their tailnet tag
+
+work01 and edit01 already carried `tag:untrusted` on the tailnet: internet, plus two named hosts. The Untrusted firewall zone applies the same rule on the LAN: SMB to the NAS, Tailscale packets to the same two hosts, nothing else on the main network. One trust decision, enforced at both layers.
+
+## Discord is blocked with Block, not Reject
+
+Block drops silently. On my own desktop that is fine, and it gives a probe nothing to read. For a client's users I would use Reject or a block page, so nobody mistakes a policy for a fault.

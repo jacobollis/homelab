@@ -195,3 +195,17 @@ The cause was the gateway's mDNS proxy, set to Auto. On Auto it reflects every n
 **What did not change.** The counter kept rising, about 60 a minute even with the lab VM shut down. So the reflection was a real finding, but it was not what the counter counted. I tested the explanation one variable at a time, proxy off and then the VM off, and kept only what each step showed. The remaining traffic is most likely the gateway's own IGMP and discovery packets on the Lab interface. That is recorded as unproven.
 
 **Lessons.** Segmenting with firewall rules is not the same as isolating a segment. Check what the gateway puts on the wire, not only what it allows through. When a vendor's flow view is empty, capture on the wire before concluding there is no traffic.
+
+## 17. Segmentation that quietly sent LAN traffic to London
+
+**Context.** Moving the work desktop VM into the Untrusted zone. The plan said Tailscale would be unaffected, because it leaves through the WAN and its own ACL already limits the desktop to two hosts.
+
+**What I measured.** Before the move, I took a baseline with `tailscale ping` from work01. Both of its allowed peers, the NAS and the Mac mini, answered directly over the LAN, in 1 ms and 7 ms. After the move, both answered `via DERP(lhr)` in 25 to 35 ms, with "direct connection not established".
+
+**Why it mattered.** Nothing failed. Syncthing synced and the message relay worked. But traffic between two machines on the same switch was now going out over the 100 Mbps PowerLine link to a relay in London and back. Tailscale hides a broken direct path by relaying, so without the baseline I would not have seen it.
+
+**Cause.** Tailscale's direct path is WireGuard over UDP between the two machines' LAN addresses. The new zone blocked everything to the main network except SMB, so the direct path was blocked too.
+
+**Change.** One more policy: UDP 41641 from Untrusted to the NAS and the Mac mini only, with return traffic allowed. Those are the same two hosts the tailnet ACL lets work01 reach, so the gateway policy mirrors the ACL, and the ACL still decides which services inside those hosts work01 can use. Both paths went back to direct, at 1 ms and 7 ms.
+
+**Lessons.** Take a `tailscale ping` before and after any segmentation change. A plan's assumption that an overlay network "isn't affected" by the underlay is a claim to test, not a fact.

@@ -6,9 +6,10 @@
 flowchart LR
   isp["Shared ISP router<br/>router mode, not mine"] -- "PowerLine pair<br/>100 Mbps cap" --> gw["UniFi Cloud Gateway Ultra"]
   gw --> sw["USW-Flex-2.5G-8 switch"]
-  sw -- "trunk: Default untagged,<br/>Lab tagged" --> pve["fulcrum-pve<br/>VLAN-aware bridge"]
+  sw -- "trunk: Default untagged,<br/>Lab and Untrusted tagged" --> pve["fulcrum-pve<br/>VLAN-aware bridge"]
   pve --> vms["Infrastructure guests<br/>Default network"]
   pve -- "Lab VLAN" --> lab["win11-ap01<br/>Autopilot lab VM"]
+  pve -- "Untrusted VLAN" --> untr["work01 and edit01<br/>desktop VMs"]
   sw --> nas["NAS"]
   sw --> ap["U7 Lite AP"]
   sw --> clients["Mac mini, TV, speakers"]
@@ -26,7 +27,7 @@ flowchart LR
 | Setting | State | Why |
 |---|---|---|
 | UPnP | Off | Nothing should open ports on its own |
-| Intrusion prevention | On, Notify and Block, default categories, on the Default and Lab networks | The 1 Gbps IPS ceiling costs nothing behind a 100 Mbps WAN |
+| Intrusion prevention | On, Notify and Block, default categories, on the Default, Lab and Untrusted networks | The 1 Gbps IPS ceiling costs nothing behind a 100 Mbps WAN |
 | Encrypted DNS | DNS-over-HTTPS to my NextDNS profile, configured as a custom DNS stamp | LAN-only devices get the same filtering and rewrites as the tailnet |
 | Content filtering and ad blocking on the gateway | Off | NextDNS already filters. Two filters in series make every blocked-site ticket twice as hard to diagnose. |
 | IPv6 | Off | Prefix delegation needs modem mode, which is not available |
@@ -100,7 +101,44 @@ The lab VM now has a DHCP reservation on the Lab network. Its logging was turned
 
 One question stays open. The Lab-to-Gateway block policy counts about 60 hits a minute even with the lab VM shut down. A packet capture on the host trunk showed only the gateway itself sending on that VLAN: IGMP and UniFi discovery traffic. The counter is most likely the gateway's own traffic on the Lab interface. That is not proven, and it is recorded as an open question rather than an answer. How the capture also found the mDNS problem is [case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
 
-Later phases, in order: untrusted desktops in their own zone with only the SMB port to the NAS allowed, an IoT and guest phase, WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs delivered to a Mac through an Intune WiFi profile, and a time-boxed VPN lab that ends with every server turned off.
+## Untrusted zone for the desktop VMs
+
+The second segmented network holds the two desktop VMs, work01 and edit01. They are where I browse and install desktop software, and they already carry `tag:untrusted` on the tailnet. The Untrusted zone brings the LAN in line with that.
+
+| Name | Action | To | Protocol and port |
+|---|---|---|---|
+| Untrusted allow DNS | Allow | Gateway | TCP/UDP 53 |
+| Untrusted allow DHCP | Allow | Gateway | UDP 67 |
+| Untrusted allow ICMP to gateway | Allow | Gateway | ICMP echo request |
+| Untrusted block gateway | Block | Gateway | All |
+| Untrusted allow NAS SMB | Allow, with return traffic | Internal, the NAS only | TCP 445 |
+| Untrusted allow Tailscale direct | Allow, with return traffic | Internal, the NAS and the Mac mini only | UDP 41641 |
+| Untrusted block ISP LAN | Block | External, the ISP router's subnet only | All |
+| Untrusted block Discord | Block | External, the Discord application | All |
+
+Design points:
+
+- **Return traffic has to be allowed explicitly.** Internal to Untrusted is blocked. Without the return-traffic option on the SMB policy, the NAS's replies would meet that block and the mount would hang rather than fail.
+- **The Tailscale policy was not in the plan.** I expected Tailscale to be unaffected because it leaves through the WAN. It was affected. See [case study 17](case-studies.md#17-segmentation-that-quietly-sent-lan-traffic-to-london).
+- **Block, not Reject, for Discord.** Block drops silently, so the page spins. That hides the policy from a probe, at the cost of a less clear experience for the user. In a client setting I would choose Reject, or a block page, so a user knows it is deliberate.
+- **The host's backups are unaffected.** The host stays on the Default network, so backup traffic never crosses the gateway. Only work01's file share traffic now routes through the gateway and its IPS.
+
+Evidence from work01 after the move:
+
+| Test | Expected | Result |
+|---|---|---|
+| File share mount | Allowed (SMB to the NAS) | Lists |
+| Syncthing to the NAS | Allowed, over Tailscale | Connected, up to date |
+| Message relay to the Mac mini | Allowed, over Tailscale | Sent and received |
+| Tailscale paths to the NAS and Mac mini | Direct | Direct, 1 ms and 7 ms |
+| SSH to llm01 | Blocked | Failed |
+| NAS admin UI | Blocked | Failed |
+| SMB to the NAS, same test method | Allowed | Opened, the positive control |
+| discord.com | Blocked by the application policy | Never loaded, policy counter at 140 |
+
+edit01 is tagged onto the network but not yet tested on it. Its boot currently stalls at a text cursor before the login screen, which is on the roadmap.
+
+Later phases, in order: an IoT and guest phase, WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs delivered to a Mac through an Intune WiFi profile, and a time-boxed VPN lab that ends with every server turned off.
 
 ## Host firewalling
 
@@ -134,7 +172,7 @@ Tailscale connects owned devices, infrastructure and a few untrusted VMs. The po
 Design points:
 
 - **No grant lets infrastructure reach other infrastructure.** A compromised container cannot use the tailnet to move sideways. This has a cost I accept: the monitoring container cannot reach the NAS by its tailnet address, so its certificate probe resolves the NAS through a local hosts entry instead.
-- **Untrusted VMs get internet only,** plus two grants scoped to named hosts. Grants 6 and 7 use aliases in the policy's `hosts` block mapped to stable tailnet addresses, rather than tags.
+- **Untrusted VMs get internet only,** plus two grants scoped to named hosts. On the LAN they sit in the matching Untrusted firewall zone, which allows Tailscale packets only to the same two hosts. Grants 6 and 7 use aliases in the policy's `hosts` block mapped to stable tailnet addresses, rather than tags.
 - **work01 stays tagged on purpose.** Untagged, it would join `autogroup:member` and gain full reach into infrastructure under grant 1. A Tailscale device loses member status the moment it carries any tag, so tagging is how its reach is cut down.
 - **No auth keys or API tokens exist** on the tailnet.
 - **Key expiry is on for personal devices,** so a lost device stops working without manual removal. It is off for tagged infrastructure and for one always-on server, by decision.

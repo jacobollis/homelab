@@ -83,8 +83,8 @@ A separate NVMe drive in a USB enclosure is a Ventoy boot drive with checksum-ve
 | Name | OS | GPU | Role |
 |---|---|---|---|
 | llm01 | Ubuntu 24.04 | RTX 5070 Ti | Headless Ollama, `gpt-oss:20b` as the main model with a 32K context. Also hosts Stable Diffusion WebUI Forge, which is stopped unless needed because it competes for VRAM. |
-| work01 | CachyOS, KDE Plasma 6 on Wayland | RTX 5080 (shared) | Daily work desktop, driving a TV. Obsidian synced through Syncthing. |
-| edit01 | Rocky Linux 8.6 | RTX 5080 (shared) | DaVinci Resolve, NVIDIA open kernel module pinned to a known-good version |
+| work01 | CachyOS, KDE Plasma 6 on Wayland | RTX 5080 (shared) | Daily work desktop, driving a TV, on the Untrusted VLAN. Obsidian synced through Syncthing. |
+| edit01 | Rocky Linux 8.6 | RTX 5080 (shared) | DaVinci Resolve, NVIDIA open kernel module pinned to a known-good version. On the Untrusted VLAN. Known issue: boot currently stalls at a text cursor before the login screen. |
 | win11-ap01 | Windows 11 Pro 26H2 | none | Intune lab device on its own Lab VLAN and firewall zone. Registered with Autopilot, Entra joined, enrolled, compliant, BitLocker on, Defender onboarded. Disposable by design. |
 
 ### Containers (LXC)

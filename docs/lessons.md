@@ -126,3 +126,14 @@ Operating principles from running this estate. Each one cost me time before I wr
 - **Firewall policy controls connections, not what the gateway announces.** An mDNS proxy on Auto reflects every network's services into every other network.
 - **An empty flow view is not proof of no traffic.** Read the policy counter and capture on the wire.
 - **Test an explanation one variable at a time and keep only what changes the result.** Turning the proxy off removed the reflected records but not the counter, so the proxy was a finding, not the cause.
+
+## Untrusted zone
+
+- **Take a fresh gateway backup at the end of any day that changes the gateway.** A backup from before a change is a rollback point, not a backup of the result.
+- **Moving a Tailscale node behind a firewall zone can break its direct LAN paths, and Tailscale hides it by relaying.** Take `tailscale ping` before and after any segmentation change.
+- **An allow policy into a zone whose reverse direction is blocked needs return traffic allowed.** For SMB, the mount hangs rather than failing, which is harder to read.
+- **Prove an application block by its policy counter.** A spinning page looks the same as a network fault.
+- **Include an allowed port in every set of deny tests,** run the same way. Without it, "blocked" could mean the test method does not work.
+- **fish has no `/dev/tcp`.** Wrap TCP probes in `bash -c '...'`.
+- **A catch-up backup can lock a VM you have just shut down.** Check the backup task list, wait for the job, then retry the config change.
+- **Read the config of every guest a change touches, not only the one being tested.** The second desktop VM's config held several things my notes did not.
