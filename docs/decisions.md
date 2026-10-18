@@ -30,6 +30,10 @@ Nothing on `tag:infra` can reach anything else on `tag:infra` over the tailnet. 
 
 Three gaming VMs were retired. The host's job is work, local AI, editing and labs. Removing gaming also removed Discord and game launchers from the estate and simplified GPU sharing to two VMs.
 
+## A game library on the desktop, on a disk with no backup
+
+In October I put a game library back on the work desktop, which partly reverses the decision above. The gaming VMs stay retired and Discord stays blocked. The library sits on its own virtual disk with Proxmox's `backup=0`, because games can be downloaded again from the store and would otherwise make the desktop's backup more than ten times larger. [Case study 19](case-studies.md#19-a-desktop-backup-that-grew-from-24-to-447-gib).
+
 ## Infrastructure as code dropped
 
 I ran Terraform against the Proxmox API in a dedicated container and retired it in October 2026. The estate is one node with a small number of hand-built guests, and my target is endpoint management, not DevOps. The container and its state were archived. The Terraform files are not in this repo yet, so I make no claim about them here.
@@ -137,3 +141,11 @@ The speaker's own mDNS record names TLS on TCP 1443 as its control port. That is
 ## Open WebUI gets its own container
 
 The chat front end runs apart from the model host. Model experiments on llm01 never take the interface down, and the container can be rebuilt without touching the GPU VM.
+
+## The replacement Mac is enrolled without Apple Business
+
+Automated Device Enrollment needs Apple Business, and Apple Business verification needs a registered organisation that matches a D-U-N-S record. This lab has no registered organisation, and I will not claim one. So the replacement Mac becomes corporate-owned the way the Mac mini did: its serial is registered in Intune as a corporate identifier before first power-on, then it enrols through Company Portal. I record the gaps against ADE as gaps: a local admin can remove the management profile, Intune's macOS LAPS cannot manage the local admin account without ADE, and nothing enrols during Setup Assistant.
+
+## Platform SSO with the Secure Enclave method
+
+The replacement Mac uses Platform SSO with the Secure Enclave method: phishing-resistant, unlocked with Touch ID, and the local password stays local. Password sync is the only method that ties the Mac password to Entra, and I do not want that. Microsoft allows one SSO extension payload per device, so the Platform SSO policy targets its own group, which the Mac mini's older SSO extension profile excludes.

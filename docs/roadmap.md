@@ -9,6 +9,8 @@ Open faults, known gaps and next work, as of 18 October 2026. Listed in priority
 - The gateway's mDNS proxy turned off after a capture showed it reflecting the estate into the lab. [Case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
 - IoT zone for the speaker pair, with app control on one port and the mDNS proxy scoped to two networks and one service. [Networking](networking.md#iot-zone-for-the-speaker-pair).
 - Open WebUI in its own container in front of llm01, backed up and probed.
+- work01's game library moved to a disk with no backup: archive from 447 GiB back to 36.8 GiB. [Case study 19](case-studies.md#19-a-desktop-backup-that-grew-from-24-to-447-gib).
+- NAS: SFTP and rsync off, port 22 closed, DDNS entry removed, monthly data scrubbing scheduled, volume encryption recorded.
 - Untrusted zone for the desktop VMs, with SMB to the NAS, direct Tailscale paths and a Discord block. [Networking](networking.md#untrusted-zone-for-the-desktop-vms).
 - Teleport off, gateway backups copied to the NAS, DHCP reservations for every fixed-MAC client, client names matched to Tailscale names.
 - `Llm01GpuAbsent` alert, built and proved.
@@ -27,7 +29,7 @@ Open faults, known gaps and next work, as of 18 October 2026. Listed in priority
 
 ## Gateway roadmap
 
-1. Retire the old UniFi controller container after its rollback week: protected final archive, out of the backup pool, destroyed, its commented probe deleted.
+1. Retire the old UniFi controller container from 13 November, after a 30-day safety net: protected final archive, out of the backup pool, destroyed, its commented probe deleted.
 2. **Next:** a guest network on the access point and a spare switch port, internet only.
 3. WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs, with the WiFi profile delivered to a Mac by Intune.
 4. A time-boxed WireGuard and Teleport lab, torn down afterwards.
@@ -37,28 +39,30 @@ Open faults, known gaps and next work, as of 18 October 2026. Listed in priority
 
 ## Monitoring and power
 
-1. Check the NAS certificate renewal lands around 24 October. The expiry metric should read about 90 days afterwards.
-2. Check the BIOS setting that decides whether the host boots itself when the UPS restores power.
-3. Optional: test the full UPS shutdown path at a time the host would be off anyway.
-4. Build or delete the dead SMART exporter job.
-5. A DNS probe on the tenant domain's MX record, so a deleted record alerts.
-6. An expected-downtime design for the dead-man's switch.
-7. Rebuild the out-of-band kernel log path (netconsole) on the working NIC. It died with the old one.
+1. Run the NAS's first data scrub by hand and record its duration. Monthly runs start in November.
+2. Check the next work01 archive lands near the desktop's used space, not hundreds of GiB.
+3. Check the NAS certificate renewal lands around 24 October. The expiry metric should read about 90 days afterwards.
+4. Check the BIOS setting that decides whether the host boots itself when the UPS restores power.
+5. Optional: test the full UPS shutdown path at a time the host would be off anyway.
+6. Build or delete the dead SMART exporter job.
+7. A DNS probe on the tenant domain's MX record, so a deleted record alerts.
+8. An expected-downtime design for the dead-man's switch.
+9. Rebuild the out-of-band kernel log path (netconsole) on the working NIC. It died with the old one.
 
 ## Security hardening
 
-- Move tenant administration to a dedicated cloud-only admin account, then remove Global Administrator from my daily account.
+- **Before late October:** move tenant administration to a dedicated cloud-only admin account, then remove Global Administrator from my daily account. Now a prerequisite for the replacement Mac.
 - Windows LAPS through Intune for the lab device, which currently has no local admin route by design.
 - DMARC from `p=none` to quarantine, after fixing Proxmox's unaligned notification mail.
 - A dedicated least-privilege NAS account for the work desktop's file share mount.
 - A NAS-only DNS token for its certificate renewals. The Proxmox host already has its own.
 - A dedicated Tailscale tag for the subnet router, so route auto-approval applies to it alone.
 - Test, then fix or delete, the SSH rule to the exit nodes.
-- Review whether the NAS's SFTP service is needed, and disable it if not.
 
 ## Lab work
 
-- Finish Remediations: the scheduled run and the portal device status.
+- Replacement Mac: corporate enrolment through Company Portal, Platform SSO with the Secure Enclave method, FileVault escrow. [Plan](m365-endpoint-labs.md#next-platform-sso-on-a-replacement-mac-planned).
+- Finish Remediations, before early December: the scheduled run and the portal device status.
 - Retention label: apply it once it propagates.
 - Sensitivity label: open the protected file in Word desktop as an outside identity to evidence the refusal.
 - Research whether a standard user's one-click override of a threat-intelligence block can be prevented. Record nothing until it is verified.

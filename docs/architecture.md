@@ -83,7 +83,7 @@ A separate NVMe drive in a USB enclosure is a Ventoy boot drive with checksum-ve
 | Name | OS | GPU | Role |
 |---|---|---|---|
 | llm01 | Ubuntu 24.04 | RTX 5070 Ti | Headless Ollama, `gpt-oss:20b` as the main model with a 32K context. Also hosts Stable Diffusion WebUI Forge, which is stopped unless needed because it competes for VRAM. |
-| work01 | CachyOS, KDE Plasma 6 on Wayland | RTX 5080 (shared) | Daily work desktop, driving a TV, on the Untrusted VLAN. Obsidian synced through Syncthing. |
+| work01 | CachyOS, KDE Plasma 6 on Wayland | RTX 5080 (shared) | Daily work desktop, driving a TV, on the Untrusted VLAN. Obsidian synced through Syncthing. A game library lives on a second virtual disk that is excluded from backup. |
 | edit01 | Rocky Linux 8.6 | RTX 5080 (shared) | DaVinci Resolve, NVIDIA open kernel module pinned to a known-good version. On the Untrusted VLAN. Known issue: boot currently stalls at a text cursor before the login screen. |
 | win11-ap01 | Windows 11 Pro 26H2 | none | Intune lab device on its own Lab VLAN and firewall zone. Registered with Autopilot, Entra joined, enrolled, compliant, BitLocker on, Defender onboarded. Disposable by design. |
 
@@ -100,10 +100,10 @@ A separate NVMe drive in a USB enclosure is a Ventoy boot drive with checksum-ve
 
 Each retirement was a decision, not an accident. The reasons are in [decisions](decisions.md).
 
-- Three gaming VMs. Gaming moved off this host for good.
+- Three gaming VMs. A game library later came back on the work desktop only, on its own unbacked disk ([decisions](decisions.md#a-game-library-on-the-desktop-on-a-disk-with-no-backup)).
 - An n8n automation container, a Terraform container and a container-image update watcher.
 - A Hetzner VPS that hosted a self-hosted chat service.
-- The self-hosted UniFi Network controller container. The UniFi gateway now runs the controller. The container is stopped and kept for one week as the rollback, then destroyed.
+- The self-hosted UniFi Network controller container. The UniFi gateway now runs the controller. The container is stopped and kept for 30 days from the cutover as the rollback, then destroyed.
 - A RHEL 10 VM used for the Intune Linux lab. The lab finished, so the VM was deleted after its Intune and Entra records were removed.
 
 Final backup archives of destroyed guests are kept and protected from pruning.
@@ -117,4 +117,7 @@ Synology DS1525+.
 - On its own UPS over USB, with DSM's UPS support enabled.
 - NFS exports are scoped to the single client address that uses each one.
 - Hub for Obsidian vault sync through Syncthing.
+- RAID 6 over five drives, Btrfs volume. Data scrubbing had never run when I first checked, so a drive rebuild would have been the first full read of some data in a year. It now runs monthly.
+- The volume is encrypted with DSM's key vault set to Local, so the NAS unlocks itself at boot. That protects drives that leave the box, not a stolen running unit. The recovery key is kept outside the NAS.
+- Remote shell on a non-default SSH port only. SFTP and rsync are off: an open port 22 that looked like SFTP turned out to be rsync's SSH transport, and nothing used it. No DDNS entry and no port forwards.
 - Let's Encrypt certificate issued and deployed by acme.sh with a DNS challenge. The deploy step creates a throwaway admin account for each run and deletes it afterwards, so no admin password is stored in the deploy config.

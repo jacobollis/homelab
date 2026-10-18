@@ -152,3 +152,14 @@ Operating principles from running this estate. Each one cost me time before I wr
 - **Test a feature from a path that cannot borrow another feature's route.** AirPlay looked fine until it was tested from an app other than the speaker's own.
 - **Turn Tailscale off on a test phone that accepts the LAN subnet route.** Otherwise the test may measure the tunnel, not the LAN.
 - **A cold boot can be checked after the fact from the guest's persistent journal.** Match the guest's boot list to the host's, then count Xid lines per boot.
+
+## Backups and the NAS
+
+- **Plan a VM's backup space from the guest's used space when its filesystem already compresses.** vzdump's zstd barely shrinks data that Btrfs has already compressed.
+- **A storage total in Proxmox may be a share quota, not the volume.** Read the volume's free space on the NAS itself before predicting a shortfall.
+- **Mount a secondary disk by UUID with `nofail`,** so a missing disk does not stop the guest booting.
+- **On DSM, a listener on port 22 with SFTP off can be the rsync service.** Its SSH transport defaults to 22. Check File Services before assuming, and prove the result from a client, since DSM ships no `nc`.
+- **A Synology volume's lock icon means encryption. Check where the key vault lives.** A Local vault unlocks at boot unattended, so it protects drives that leave the box, not a stolen running unit. Keep the recovery file off the encrypted volume.
+- **Check a NAS for data scrubbing on day one, not after a failure.**
+- **Check Hyper Backup vault integrity only through DSM's own restore wizard.** A vault can look corrupt to third-party tools while intact.
+- **UniFi's device fingerprint is a guess.** It labelled a MacBook on a private MAC as an iPhone. Identify a client by its MAC against the device's own network settings.

@@ -14,6 +14,7 @@ Every lab follows the same pattern: record the state as found, change one thing,
 | Windows Autopilot, user-driven, Entra joined | Complete |
 | Conditional Access, require compliant device | Complete, enforced |
 | macOS enrolment, compliance, SSO extension, Defender | Complete |
+| macOS corporate enrolment with Platform SSO on a second Mac | Planned, from late October |
 | Android Enterprise fully managed, compliance, Defender | Complete |
 | iPhone app protection without enrolment | Complete, enforced |
 | Windows compliance and BitLocker | Complete |
@@ -105,6 +106,20 @@ The Mac was enrolled, managed and compliant in Intune, and every Entra sign-in f
 Device-based Conditional Access on macOS needs the Microsoft Enterprise SSO plug-in, which arrives only as a configuration profile you deploy on purpose. I deployed a Device features profile with SSO app extension type Microsoft Entra ID, the Edge bundle ID, and `browser_sso_interaction_enabled` and `disable_explicit_app_prompt` set to 1 as integers. Same Mac, same browser, same policy: the sign-in then carried the device ID and showed Compliant Yes.
 
 Firefox on macOS never presents a device identity, so a Firefox test proves nothing about the device. Microsoft's block page suggests Safari by name, which is the clue.
+
+### Next: Platform SSO on a replacement Mac (planned)
+
+A replacement MacBook arrives in late October and takes over as my git machine. Nothing below is built yet. The design:
+
+- Corporate ownership from a serial registered before first power-on, then Company Portal enrolment. No ADE, for the reason in [decisions](decisions.md#the-replacement-mac-is-enrolled-without-apple-business).
+- Platform SSO through a settings catalog policy, Secure Enclave method, on its own group. That group is excluded from the Mac mini's Device features SSO profile, to avoid Microsoft's error 10002 for more than one SSO extension payload.
+- FileVault with the recovery key escrowed to Intune from day one, which the Mac mini never had.
+- A local admin account for elevation and a standard daily user.
+- **Prerequisite:** my daily account stops being a Global Administrator first. A separate cloud-only admin account takes the role. Otherwise the Mac's sign-in identity would be a Global Administrator, which is the root cause of the [admin consent incident](#tenant-administration-incident-an-accidental-admin-consent).
+
+Evidence to capture: enrolment status, the Platform SSO registration, the Entra join type, one SSO extension profile and no 10002, the escrowed key, compliance, Defender health, and a Conditional Access sign-in showing the device as compliant and managed.
+
+The outgoing MacBook was the tenant's unmanaged negative case for the compliant-device policy. That evidence is already captured. Afterwards, the work desktop, an unmanaged Linux machine inside the policy's platform scope, shows the block on demand.
 
 ## Android Enterprise
 

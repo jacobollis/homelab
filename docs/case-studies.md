@@ -231,3 +231,28 @@ The cause was the gateway's mDNS proxy, set to Auto. On Auto it reflects every n
 **One wrong reading, caught.** AirPlay was first reported as still working. That test used the phone's Now Playing controls for the speaker app, which run through the app on 1443. Tested properly, from another app with the speaker app closed, AirPlay was gone, as the proxy scope implies. I left it off.
 
 **Lessons.** Find out what a client actually does before writing cross-VLAN rules. Ask an mDNS device directly when a capture comes up empty. Prove a proxy's scope with a positive and a negative capture. Test a feature from a path that cannot borrow another feature's working route.
+
+## 19. A desktop backup that grew from 24 to 447 GiB
+
+**Symptom.** The work desktop's nightly archive was 24 GiB on 11 October. A week later one run wrote 195 GiB, the next 375 GiB, and a manual run 447 GiB. The backup share's usage climbed with each one.
+
+**Diagnosis.**
+
+- `df` inside the VM showed 456 GB used on the root filesystem, and `du` put 416 GB of it in one directory: a game library I had installed on 14 October. The snapshot list confirmed the install date.
+- The VM's filesystem is Btrfs with zstd compression. vzdump compresses with zstd too, so it had almost nothing left to save. The archive tracks used space, not the disk size.
+- The offsite job carried the 195 GiB archive over the 100 Mbps PowerLine link at under 3 MB/s, for about half a day.
+
+**A wrong reading, caught.** Proxmox showed the backup share with a 1 TiB total, and I read that as the volume's free space and predicted a Sunday shortfall. The total is the shared folder's quota in DSM, and two days later it read 2 TiB. The prediction was wrong. The quota is the real ceiling, and the volume's free space had never been recorded, so I read it in Storage Manager.
+
+**Decision.** Removing the library would have kept an earlier decision that gaming stays off the host. I chose to keep it, on a disk that backups skip, because the games can be downloaded again from the store and are not worth backing up.
+
+**Change.**
+
+1. Added a 600 GB second virtual disk with `backup=0`, hot-plugged.
+2. Formatted it Btrfs, mounted by UUID with `nofail`, so a missing disk cannot stop the desktop booting.
+3. Moved the library with the store client's own move tool, then ran `fstrim` on the root filesystem so the thin pool got the freed space back.
+4. Freed the three large archives by hand.
+
+**Result.** The next manual archive was 36.8 GiB. An archive that size cannot hold a 340 GB library, so the exclusion works as configured. The share dropped to 24% used.
+
+**Lessons.** Read the guest's own used space before blaming the backup tool. On a compressed filesystem, plan backup space from `df`, not from the compression ratio vzdump shows. Before predicting a shortfall from a storage total, find out which limit that total is.

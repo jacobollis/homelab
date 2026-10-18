@@ -91,7 +91,7 @@ Listed so they are not mistaken for coverage:
 | Job | Schedule | Scope | Retention |
 |---|---|---|---|
 | nightly-lxc | 01:00 | Every container in the `nightly-lxc` pool | 7 daily, 4 weekly |
-| work01 | 01:30 | work01 | 2 daily, 1 weekly |
+| work01 | 01:30 | work01, system disk only | 2 daily, 1 weekly |
 | weekly-llm01 | Sunday 00:00 | llm01, about 130 GB per archive | 2 weekly |
 | Offsite | 02:00 | NAS Hyper Backup to a Hetzner Storage Box | Nightly incrementals |
 
@@ -102,6 +102,8 @@ Design points:
 - **zstd compression** on every job. All jobs finish before the 02:00 offsite run.
 - **Container backups use a local tmpdir.** In stop mode to the NAS share, tar runs as the container's mapped UID and cannot write its temp file there.
 - **The NFS export is scoped to the host's address.** The renumber sweep found that moving the host without a new export rule would have broken every backup. A manual backup over the new export was one of the renumber's verify gates.
+- **work01's game library disk has no backup, by design.** The games can be downloaded again from the store. The disk carries Proxmox's `backup=0` flag, so the archive holds the system disk only. See [case study 19](case-studies.md#19-a-desktop-backup-that-grew-from-24-to-447-gib).
+- **Expect a desktop archive close to the disk's used space.** work01's filesystem already compresses with zstd, so vzdump's zstd barely shrinks it.
 - **The Autopilot lab VM has no backup, by design.** The value of those labs lives in tenant-side objects. Rollback points are Proxmox snapshots taken per lab, and deleted once the lab is banked.
 - **Khoj's database is backed up crash-consistent,** since Postgres runs live in Docker. Acceptable in snapshot mode. A clean dump would need a pre-backup hook.
 
