@@ -209,3 +209,25 @@ The cause was the gateway's mDNS proxy, set to Auto. On Auto it reflects every n
 **Change.** One more policy: UDP 41641 from Untrusted to the NAS and the Mac mini only, with return traffic allowed. Those are the same two hosts the tailnet ACL lets work01 reach, so the gateway policy mirrors the ACL, and the ACL still decides which services inside those hosts work01 can use. Both paths went back to direct, at 1 ms and 7 ms.
 
 **Lessons.** Take a `tailscale ping` before and after any segmentation change. A plan's assumption that an overlay network "isn't affected" by the underlay is a claim to test, not a fact.
+
+## 18. A speaker pair behind a firewall, designed from a capture
+
+**Goal.** Move a wired stereo speaker pair onto an IoT network, keep control from the phone app on the main network, and leak nothing into the other segments. The vendor documents ports but not which side connects or how discovery crosses networks, and its own staff advise against cross-VLAN setups. I set a fallback first: if it failed, the speakers would go back.
+
+**Baseline before any change.**
+
+- A capture on each segmented VLAN, with the mDNS proxy Off. The gateway sends its own service query once a minute on every network. Without that baseline, the first capture after the change would have looked like a leak.
+- A capture on the main network while relaunching the app. The app discovers by mDNS and by SSDP at the same time. Only mDNS can cross this gateway.
+- A passive capture could not see the speaker's full service record. The phone's repeat queries listed answers it already had, so the speaker stayed silent, and other replies went unicast to the phone's switch port. So I asked the speaker directly with `dig @<speaker> -p 5353 -t PTR _sonos._tcp.local`. The answer gave the control port, TCP 1443, and the protocol. That one port became the whole allow rule.
+
+**Change, one stage at a time.**
+
+1. The IoT network and zone, with seven policies. A pre-filled factory address in the DHCP guarding field was corrected before any device joined.
+2. The mDNS proxy set to Custom: the main and IoT networks only, the speaker service only. The scope was proved both ways while the speakers were still on the main network. A capture on IoT showed the gateway forwarding the app's query (the positive control). Captures on Lab and Untrusted showed only their baseline (the negative).
+3. Both switch ports moved together, because the two speakers form a stereo pair, then both unplugged together so they took new leases. Their WiFi was already off, so no wireless mesh could bridge the old and new networks.
+
+**Result.** The app found and controlled the pair, both channels. The control policy counted 160 hits. That counter is the proof, because the gateway cannot generate traffic into IoT on that port itself. Lab and Untrusted still showed only their baseline.
+
+**One wrong reading, caught.** AirPlay was first reported as still working. That test used the phone's Now Playing controls for the speaker app, which run through the app on 1443. Tested properly, from another app with the speaker app closed, AirPlay was gone, as the proxy scope implies. I left it off.
+
+**Lessons.** Find out what a client actually does before writing cross-VLAN rules. Ask an mDNS device directly when a capture comes up empty. Prove a proxy's scope with a positive and a negative capture. Test a feature from a path that cannot borrow another feature's working route.

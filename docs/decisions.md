@@ -125,3 +125,15 @@ work01 and edit01 already carried `tag:untrusted` on the tailnet: internet, plus
 ## Discord is blocked with Block, not Reject
 
 Block drops silently. On my own desktop that is fine, and it gives a probe nothing to read. For a client's users I would use Reject or a block page, so nobody mistakes a policy for a fault.
+
+## The mDNS proxy is scoped to two networks and one service
+
+Speakers on the IoT network need their announcements to reach the phone app on the main network. The proxy runs in Custom mode with only those two networks and the one service the app needs. Lab and Untrusted are outside its scope, and captures prove nothing reaches them. Auto, which reflected everything everywhere, stays off the table.
+
+## The speakers get one control port in, nothing else
+
+The speaker's own mDNS record names TLS on TCP 1443 as its control port. That is the single allow from the main network, with replies allowed back, and only to the two speakers. AirPlay would need another port plus a range of dynamic ports into IoT, so it stays off.
+
+## Open WebUI gets its own container
+
+The chat front end runs apart from the model host. Model experiments on llm01 never take the interface down, and the container can be rebuilt without touching the GPU VM.

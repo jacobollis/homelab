@@ -12,7 +12,8 @@ flowchart LR
   pve -- "Untrusted VLAN" --> untr["work01 and edit01<br/>desktop VMs"]
   sw --> nas["NAS"]
   sw --> ap["U7 Lite AP"]
-  sw --> clients["Mac mini, TV, speakers"]
+  sw -- "IoT VLAN" --> sonos["Speaker pair"]
+  sw --> clients["Mac mini"]
 ```
 
 - Since October 2026 a **UniFi Cloud Gateway Ultra** is the router, firewall, DHCP server and DNS forwarder for the estate. It also runs UniFi Network for the switch and access point, replacing a self-hosted controller container.
@@ -27,11 +28,11 @@ flowchart LR
 | Setting | State | Why |
 |---|---|---|
 | UPnP | Off | Nothing should open ports on its own |
-| Intrusion prevention | On, Notify and Block, default categories, on the Default, Lab and Untrusted networks | The 1 Gbps IPS ceiling costs nothing behind a 100 Mbps WAN |
+| Intrusion prevention | On, Notify and Block, default categories, on the Default, Lab, Untrusted and IoT networks | The 1 Gbps IPS ceiling costs nothing behind a 100 Mbps WAN |
 | Encrypted DNS | DNS-over-HTTPS to my NextDNS profile, configured as a custom DNS stamp | LAN-only devices get the same filtering and rewrites as the tailnet |
 | Content filtering and ad blocking on the gateway | Off | NextDNS already filters. Two filters in series make every blocked-site ticket twice as hard to diagnose. |
 | IPv6 | Off | Prefix delegation needs modem mode, which is not available |
-| mDNS proxy | Off | On Auto it reflected every network's service announcements into the lab VLAN. See [case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab). |
+| mDNS proxy | Custom: main and IoT networks only, one service only | On Auto it reflected every network's service announcements into the lab VLAN ([case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab)). It was Off until the speakers needed it, then scoped as tightly as the app allows ([case study 18](case-studies.md#18-a-speaker-pair-behind-a-firewall-designed-from-a-capture)). |
 | Teleport (UniFi's brokered VPN) | Off | Found enabled. Tailscale is the only remote access path. |
 | Internet quality and outage logging | On by default | The evidence base for any request to replace the PowerLine link |
 
@@ -138,7 +139,43 @@ Evidence from work01 after the move:
 
 edit01 is tagged onto the network but not yet tested on it. Its boot currently stalls at a text cursor before the login screen, which is on the roadmap.
 
-Later phases, in order: an IoT and guest phase, WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs delivered to a Mac through an Intune WiFi profile, and a time-boxed VPN lab that ends with every server turned off.
+## IoT zone for the speaker pair
+
+The third segmented network holds a wired stereo speaker pair. Speakers are the classic IoT problem: the phone app discovers them by multicast, which does not cross a router, and vendors rarely document what their app needs. Sonos's own staff advise keeping the app and speakers on one subnet. I set a fallback before starting: if the app could not control the speakers from the main network, they would go back and the IoT network would stay empty.
+
+| Name | Action | From | To | Protocol and port |
+|---|---|---|---|---|
+| Default allow Sonos control | Allow, with return traffic | Internal | The two speakers only | TCP 1443 |
+| IoT allow DNS | Allow | IoT | Gateway | TCP/UDP 53 |
+| IoT allow DHCP | Allow | IoT | Gateway | UDP 67 |
+| IoT allow mDNS to gateway | Allow | IoT | Gateway | UDP 5353 |
+| IoT allow ICMP to gateway | Allow | IoT | Gateway | ICMP echo request |
+| IoT block gateway | Block | IoT | Gateway | All |
+| IoT block ISP LAN | Block | IoT | External, the ISP router's subnet only | All |
+
+Design points:
+
+- **One control port, found by asking the speaker.** The vendor's firewall article lists many ports and says nothing about which side connects. A query straight to a speaker's mDNS responder returned its service record: control is TLS on TCP 1443, from the app to the speaker. That is the only port allowed in. A test from the host showed 1443 open and the speaker's older HTTP port blocked.
+- **The mDNS allow sits above the gateway block.** The proxy needs the speakers' announcements. My custom block on the Gateway zone would otherwise shadow the built-in mDNS allow.
+- **The IoT zone cannot start anything toward the main network.** The only path across is the app connecting in, with replies allowed back.
+- **AirPlay is off, by decision.** AirPlay announces a different service, outside the proxy scope, and AirPlay 2 needs a further port plus a range of dynamic ones from the main network into IoT. The Sonos app is enough.
+- **DHCP guarding needed a fix.** The new-network form pre-filled the gateway's factory LAN address as the trusted DHCP server. With guarding on, that would have dropped the gateway's own offers on the new network. Corrected before any device joined.
+
+Evidence, with the phone on the main network and Tailscale off:
+
+| Test | Expected | Result |
+|---|---|---|
+| App finds the speaker pair after a relaunch | Through the mDNS proxy | Found |
+| Play, pause and volume, both channels | Allowed on TCP 1443 | Worked. The control policy counted 160 hits, which only real client traffic can produce. |
+| TCP 1443 to a speaker from the host | Allowed | Open |
+| The speaker's HTTP port from the host | Blocked | Blocked |
+| Speaker records reaching Lab or Untrusted | None | Captures on both showed only their baseline, before and after the move |
+| AirPlay from another app | Not offered | Not offered |
+| IoT to the ISP router's subnet | Blocked | No attempts |
+
+Two smaller unknowns, recorded rather than guessed: the speakers try some gateway service beyond DNS, DHCP and mDNS (NTP is the likeliest), and they made three attempts toward the main network. Neither is visible from the host's switch port, so naming them waits for a syslog receiver.
+
+Later phases, in order: a guest network, WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs delivered to a Mac through an Intune WiFi profile, and a time-boxed VPN lab that ends with every server turned off.
 
 ## Host firewalling
 

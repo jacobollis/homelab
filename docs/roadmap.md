@@ -1,12 +1,14 @@
 # Roadmap
 
-Open faults, known gaps and next work, as of 16 October 2026. Listed in priority order within each group.
+Open faults, known gaps and next work, as of 18 October 2026. Listed in priority order within each group.
 
 ## Done since the last snapshot (12 October)
 
 - UniFi Cloud Gateway in place, LAN renumbered, gateway hardening complete. [Case study 13](case-studies.md#13-renumbering-a-live-estate-behind-a-new-gateway).
 - Zone-based firewall with a Lab zone and five policies, and the lab VM moved onto the Lab VLAN with every allow and deny path proved. [Networking](networking.md#zone-based-firewall-and-the-lab-vlan).
 - The gateway's mDNS proxy turned off after a capture showed it reflecting the estate into the lab. [Case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
+- IoT zone for the speaker pair, with app control on one port and the mDNS proxy scoped to two networks and one service. [Networking](networking.md#iot-zone-for-the-speaker-pair).
+- Open WebUI in its own container in front of llm01, backed up and probed.
 - Untrusted zone for the desktop VMs, with SMB to the NAS, direct Tailscale paths and a Discord block. [Networking](networking.md#untrusted-zone-for-the-desktop-vms).
 - Teleport off, gateway backups copied to the NAS, DHCP reservations for every fixed-MAC client, client names matched to Tailscale names.
 - `Llm01GpuAbsent` alert, built and proved.
@@ -17,7 +19,7 @@ Open faults, known gaps and next work, as of 16 October 2026. Listed in priority
 
 ## Open faults
 
-- **RTX 5070 Ti link stability.** Slot capped at Gen4. Closes after seven consecutive clean cold boots. Two are logged. If a load fault recurs at Gen4, the riser gets replaced. See [case study 1](case-studies.md#1-a-gpu-that-fell-off-the-bus-gen5-over-a-gen4-cable).
+- **RTX 5070 Ti link stability.** Slot capped at Gen4. Closes after seven consecutive clean cold boots. Five are logged. Two were checked after the fact from llm01's persistent journal, since they followed manual shutdowns. If a load fault recurs at Gen4, the riser gets replaced. See [case study 1](case-studies.md#1-a-gpu-that-fell-off-the-bus-gen5-over-a-gen4-cable).
 - **edit01 boot stalls at a text cursor** before the login screen, with signal present. Leads, in order: a boot step waiting on network storage the new zone now blocks, the display manager or NVIDIA driver failing to start, and the missing CPU pinning that work01 carries. First step: a text console and the boot's error log. Then finish its checks on the Untrusted network.
 - **Then: move the firmware's primary display to the integrated GPU,** so firmware stops initialising a card that VFIO later takes. Held back until the link test closes.
 - **Wake-on-LAN from power-off fails.** The earlier suspect, a forced link speed, turned out not to exist: the NIC autonegotiates. The remaining suspect is the NIC's link on standby power. Diagnosis planned for the next shutdown.
@@ -26,11 +28,12 @@ Open faults, known gaps and next work, as of 16 October 2026. Listed in priority
 ## Gateway roadmap
 
 1. Retire the old UniFi controller container after its rollback week: protected final archive, out of the backup pool, destroyed, its commented probe deleted.
-2. **Next:** IoT and guest networks. Speakers on an IoT network need mDNS across VLANs, so the proxy goes to Custom with only those networks named, never reflecting into Lab or Untrusted.
+2. **Next:** a guest network on the access point and a spare switch port, internet only.
 3. WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs, with the WiFi profile delivered to a Mac by Intune.
 4. A time-boxed WireGuard and Teleport lab, torn down afterwards.
 5. A syslog receiver for firewall and IPS logs.
 6. Open question: the block-to-gateway counter on each segmented network rises with no client on the VLAN. Most likely the gateway's own traffic, not proven.
+7. Name the two unidentified things the speakers try: a gateway service and a connection toward the main network. Needs the syslog receiver.
 
 ## Monitoring and power
 

@@ -14,11 +14,11 @@ Snapshot: 15 October 2026.
 | Identity and access | Conditional Access requiring a compliant device or app protection, break-glass accounts, consent settings hardened after an accidental admin consent | [M365 and Intune labs](docs/m365-endpoint-labs.md) |
 | Endpoint security | Defender for Endpoint onboarded on Windows, macOS and Android, network protection in block mode, web content filtering in Edge and Firefox | [M365 and Intune labs](docs/m365-endpoint-labs.md) |
 | Data protection | Sensitivity label with encryption, DLP blocking external email, retention, eDiscovery content search | [M365 and Intune labs](docs/m365-endpoint-labs.md) |
-| Network edge | UniFi Cloud Gateway behind a shared ISP router, a live renumber of the whole estate, IPS in block mode, encrypted DNS upstream, zone-based firewall with segmented lab and untrusted-desktop VLANs, every allow and deny proved by test | [Networking](docs/networking.md) |
+| Network edge | UniFi Cloud Gateway behind a shared ISP router, a live renumber of the whole estate, IPS in block mode, encrypted DNS upstream, zone-based firewall with segmented lab, untrusted-desktop and IoT VLANs, a scoped mDNS proxy, every allow and deny proved by test | [Networking](docs/networking.md) |
 | Virtualisation | Proxmox VE 9.2, VFIO passthrough of two GPUs and a whole USB4 controller, a hookscript that keeps two VMs off one GPU | [Architecture](docs/architecture.md) |
 | Remote access | Tailscale with a four-zone least-privilege ACL, subnet router, self-hosted exit nodes, tailnet-wide DNS filtering | [Networking](docs/networking.md) |
 | Monitoring and resilience | Prometheus, Alertmanager and blackbox_exporter on an independent drive, drive-fault and GPU-absent alerts, certificate expiry and probe-failure alerts, UPS shutdown with NUT, dead-man's switch, offsite backup | [Monitoring and backups](docs/monitoring-and-backups.md) |
-| Troubleshooting | Seventeen written-up faults and changes, each with the evidence that settled it | [Case studies](docs/case-studies.md) |
+| Troubleshooting | Eighteen written-up faults and changes, each with the evidence that settled it | [Case studies](docs/case-studies.md) |
 
 ## Scope, stated plainly
 
@@ -40,7 +40,7 @@ flowchart LR
     edit01["edit01 VM<br/>DaVinci Resolve, RTX 5080"]
     ap01["win11-ap01 VM<br/>Autopilot lab device"]
     mon01["mon01 LXC<br/>Prometheus stack"]
-    other["tasks01, khoj01 LXCs"]
+    other["tasks01, khoj01, chat01 LXCs"]
   end
   sw --> host
   sw --> nas["Synology NAS<br/>backups, subnet router"]

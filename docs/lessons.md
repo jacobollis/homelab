@@ -137,3 +137,18 @@ Operating principles from running this estate. Each one cost me time before I wr
 - **fish has no `/dev/tcp`.** Wrap TCP probes in `bash -c '...'`.
 - **A catch-up backup can lock a VM you have just shut down.** Check the backup task list, wait for the job, then retry the config change.
 - **Read the config of every guest a change touches, not only the one being tested.** The second desktop VM's config held several things my notes did not.
+
+## IoT zone
+
+- **Find out what a client actually does before writing cross-VLAN rules.** Capture its discovery on the trunk while relaunching the app, then design from that.
+- **Ask an mDNS device directly when a capture comes up empty.** `dig @<device> -p 5353 -t PTR <service>.local` returns the full record, including the port the app connects to.
+- **A capture on the hypervisor's uplink sees multicast, broadcast and its own traffic, nothing else.** Unicast between two other switch ports never reaches it.
+- **Prove a proxy's scope both ways.** A capture on the target network for the forwarded query, and captures on every other network for anything beyond their baseline.
+- **Record each network's mDNS baseline before turning a proxy on.** The gateway queries every network itself once a minute.
+- **A custom block to the gateway shadows the built-in mDNS allow.** Put an explicit allow above it on the zone the proxy serves.
+- **Check DHCP guarding's trusted server on every new network.** The form can pre-fill a factory address.
+- **Move both halves of a paired device in one step,** and power-cycle them after changing the switch port's native network.
+- **Prove a cross-zone allow with a counter the gateway cannot generate.**
+- **Test a feature from a path that cannot borrow another feature's route.** AirPlay looked fine until it was tested from an app other than the speaker's own.
+- **Turn Tailscale off on a test phone that accepts the LAN subnet route.** Otherwise the test may measure the tunnel, not the LAN.
+- **A cold boot can be checked after the fact from the guest's persistent journal.** Match the guest's boot list to the host's, then count Xid lines per boot.

@@ -13,7 +13,7 @@ The monitoring stack lives in mon01, a container on a different physical drive f
 
 All binaries are installed by hand under one service account, with their own systemd units. No distribution package and no Docker. Prometheus reloads with SIGHUP through a systemd drop-in. Alertmanager has no reload action in its unit, so it is reloaded with `systemctl kill -s HUP` and the journal is checked for a successful config load.
 
-35 rules in 14 groups: proof-and-watchdog, availability, storage, SMART, thermal, power, Ollama, application probes, NAS backup space, backup coverage, certificates, NVMe bus drops, NVMe kernel errors and gateway.
+36 rules in 14 groups: proof-and-watchdog, availability, storage, SMART, thermal, power, Ollama, application probes, NAS backup space, backup coverage, certificates, NVMe bus drops, NVMe kernel errors and gateway.
 
 Every new alert is proved before I rely on it: invert or redirect the condition, watch it fire and resolve on Telegram, then set it back in the same sitting and grep the rule file.
 
@@ -60,7 +60,7 @@ Alertmanager's warning route waits 30 seconds before its first send. With a 30-s
 
 ### Application probes
 
-blackbox_exporter probes the task manager, Khoj and Ollama over HTTP. Each has a rule that fires after three minutes of failure. The alert path was tested end to end.
+blackbox_exporter probes the task manager, Khoj, Open WebUI and Ollama over HTTP. Each has a rule that fires after three minutes of failure. The alert path was tested end to end.
 
 ### Dead-man's switches
 

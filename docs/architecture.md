@@ -66,7 +66,7 @@ Drives are always resolved by serial number. Device names such as `nvme0n1` chan
 | Drive | Pool | Holds |
 |---|---|---|
 | 4 TB NVMe | `pve` volume group, `local-lvm` | Host OS, llm01, work01, win11-ap01 |
-| 4 TB NVMe | `gaming-nvme` thin pool (name kept from its first use) | mon01, tasks01, khoj01 |
+| 4 TB NVMe | `gaming-nvme` thin pool (name kept from its first use) | mon01, tasks01, khoj01, chat01 |
 | 1 TB NVMe | `edit-nvme` thin pool | edit01 |
 
 - Thin-pool autoextend is set globally at 80 percent threshold, 20 percent growth.
@@ -94,6 +94,7 @@ A separate NVMe drive in a USB enclosure is a Ventoy boot drive with checksum-ve
 | mon01 | Prometheus, Alertmanager and blackbox_exporter. Hand-installed binaries under one service account, no Docker. etckeeper versions its `/etc`. |
 | tasks01 | Vikunja task manager |
 | khoj01 | Khoj, a self-hosted search and chat over my Obsidian vault. Chat runs on llm01 over the LAN. Search embeddings run locally in the container. |
+| chat01 | Open WebUI, a browser and phone chat front end for llm01's models. Its own container, so model work on llm01 never takes the interface down. Not on the tailnet: remote devices reach it through the NAS subnet route. llm01's firewall allows it by source address only. In the nightly backup pool and probed by monitoring. |
 
 ### Retired
 
