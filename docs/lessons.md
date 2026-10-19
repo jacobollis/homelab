@@ -163,3 +163,14 @@ Operating principles from running this estate. Each one cost me time before I wr
 - **Check a NAS for data scrubbing on day one, not after a failure.**
 - **Check Hyper Backup vault integrity only through DSM's own restore wizard.** A vault can look corrupt to third-party tools while intact.
 - **UniFi's device fingerprint is a guess.** It labelled a MacBook on a private MAC as an iPhone. Identify a client by its MAC against the device's own network settings.
+
+## Guest network
+
+- **A UniFi zone may get its built-in rules only when a network joins it.** Read the zone again after creating the network, and plan custom rules against what appears.
+- **Read the built-in rules before writing a custom one.** A planned block on the ISP router's LAN was already covered.
+- **Reread the whole form when a UniFi form changes mode.** Switching an SSID off captive portal reset its security protocol.
+- **Read the live port list before changing a switch port.** My notes had two ports swapped.
+- **Strip the test client before testing isolation.** Quit Tailscale, and test the gateway's resolver with `dig @<gateway>` when the client has its own DNS profile.
+- **An isolation test needs a positive control.** Zero replies between two guests prove nothing until the same pair answers on a network without isolation.
+- **A UniFi hit counter shows where the gateway counted a packet, not which rule blocked it.** Prove a deny from the client.
+- **Give a real example value in a command, never a placeholder.** A placeholder address was run as typed.

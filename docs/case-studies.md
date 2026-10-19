@@ -256,3 +256,20 @@ The cause was the gateway's mDNS proxy, set to Auto. On Auto it reflects every n
 **Result.** The next manual archive was 36.8 GiB. An archive that size cannot hold a 340 GB library, so the exclusion works as configured. The share dropped to 24% used.
 
 **Lessons.** Read the guest's own used space before blaming the backup tool. On a compressed filesystem, plan backup space from `df`, not from the compression ratio vzdump shows. Before predicting a shortfall from a storage total, find out which limit that total is.
+
+## 20. A guest network that needed no custom rules
+
+**Goal.** A guest WiFi network that reaches the internet and nothing else, with no guest able to reach another, on the gateway's own guest zone.
+
+**The plan was nearly wrong twice.**
+
+- I planned a custom rule to block the ISP router's LAN. After the network existed, the zone held a built-in rule blocking every private range. Before it existed, the zone showed only a default block, so reading it first would have led to a duplicate rule. I dropped the custom rule.
+- The plan named a switch port to set to the guest network. Before changing it, the live port list showed my notes had two ports swapped. The named port carried the Mac mini. Changing it would have moved a managed Mac onto the guest network.
+
+**The form changed a setting behind my back.** The new SSID defaulted to a captive portal. Switching to a standard SSID reset WPA2/WPA3 to WPA2 only. A full reread of the form caught it.
+
+**Test design.** One laptop on the guest SSID with Tailscale quit, so the subnet route could not reach what the guest network should not. Its own DNS profile resolves over DoH, so I tested the gateway's resolver with `dig` against the guest gateway. Every private target timed out: the NAS, the gateway's admin on two networks, the ISP router, a speaker on the IoT network. A public site loaded. For isolation, ping between two guest clients failed, and the same pair answered on the main network. Without that positive control, the failed ping proved nothing.
+
+**What I could not explain.** The hit counters. The rules that should have blocked the private ranges stayed at zero, a different built-in rule counted thousands, and the captive portal rules counted with no portal enabled. A counter shows where the gateway logged a packet, not which rule decided its fate. The deny is proven from the client. The attribution waits for a syslog receiver.
+
+**Lessons.** Read a zone's built-in rules after the network joins it. Read the live port list before changing a port. Reread a whole form after it changes mode. Strip the test client of overlays first. Pair every isolation test with a positive control. Treat hit counters as supporting evidence only.

@@ -149,3 +149,7 @@ Automated Device Enrollment needs Apple Business, and Apple Business verificatio
 ## Platform SSO with the Secure Enclave method
 
 The replacement Mac uses Platform SSO with the Secure Enclave method: phishing-resistant, unlocked with Touch ID, and the local password stays local. Password sync is the only method that ties the Mac password to Entra, and I do not want that. Microsoft allows one SSO extension payload per device, so the Platform SSO policy targets its own group, which the Mac mini's older SSO extension profile excludes.
+
+## The guest network uses the gateway's built-in guest zone
+
+The Hotspot zone's built-in rules already block every private range and allow DNS and DHCP to the gateway. A custom zone would have meant writing and maintaining the same rules by hand. No captive portal: the SSID is password-protected and the portal adds nothing for a household. Client isolation is on.

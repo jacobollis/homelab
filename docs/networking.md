@@ -12,6 +12,7 @@ flowchart LR
   pve -- "Untrusted VLAN" --> untr["work01 and edit01<br/>desktop VMs"]
   sw --> nas["NAS"]
   sw --> ap["U7 Lite AP"]
+  ap -- "Guest SSID, Guest VLAN" --> guests["Guest devices<br/>internet only, isolated"]
   sw -- "IoT VLAN" --> sonos["Speaker pair"]
   sw --> clients["Mac mini"]
 ```
@@ -28,7 +29,7 @@ flowchart LR
 | Setting | State | Why |
 |---|---|---|
 | UPnP | Off | Nothing should open ports on its own |
-| Intrusion prevention | On, Notify and Block, default categories, on the Default, Lab, Untrusted and IoT networks | The 1 Gbps IPS ceiling costs nothing behind a 100 Mbps WAN |
+| Intrusion prevention | On, Notify and Block, default categories, on the Default, Lab, Untrusted, IoT and Guest networks | The 1 Gbps IPS ceiling costs nothing behind a 100 Mbps WAN |
 | Encrypted DNS | DNS-over-HTTPS to my NextDNS profile, configured as a custom DNS stamp | LAN-only devices get the same filtering and rewrites as the tailnet |
 | Content filtering and ad blocking on the gateway | Off | NextDNS already filters. Two filters in series make every blocked-site ticket twice as hard to diagnose. |
 | IPv6 | Off | Prefix delegation needs modem mode, which is not available |
@@ -175,7 +176,31 @@ Evidence, with the phone on the main network and Tailscale off:
 
 Two smaller unknowns, recorded rather than guessed: the speakers try some gateway service beyond DNS, DHCP and mDNS (NTP is the likeliest), and they made three attempts toward the main network. Neither is visible from the host's switch port, so naming them waits for a syslog receiver.
 
-Later phases, in order: a guest network, WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs delivered to a Mac through an Intune WiFi profile, and a time-boxed VPN lab that ends with every server turned off.
+## Guest network
+
+The last network in this phase is for visitors: internet only, nothing else, and no guest able to reach another.
+
+- **UniFi's built-in Hotspot zone, not a custom zone.** Once a network joins it, UniFi adds the zone's own guest rules. One of them, `Post-Authorization Restrictions`, already blocks every private range, which covers the ISP router's LAN. The custom block I had planned would have duplicated it, so I wrote no custom policies at all. I read the zone's rules again after the network existed, because before that it showed only a default block.
+- **A WPA2/WPA3 SSID with client isolation, no captive portal.** The form defaulted to a captive portal. Switching it off silently reset the security protocol to WPA2 only, which I caught on a full reread of the form and set back.
+- **An empty switch port set to the Guest network,** so anything plugged into it lands on guest. The plan named one port; the live port list showed my notes had two ports swapped, and that port carried the Mac mini. I changed the port the live list showed empty.
+
+Evidence, from a laptop on the guest SSID with Tailscale quit, so the subnet route could not stand in for the LAN:
+
+| Test | Expected | Result |
+|---|---|---|
+| A public website over HTTPS | Allowed | Loaded |
+| DNS through the guest gateway | Allowed | Answered |
+| NAS file share and admin UI | Blocked | Timed out |
+| Gateway admin on the main network and on the guest network | Blocked | Timed out |
+| The ISP router's admin page | Blocked | Timed out |
+| A speaker's control port on the IoT network | Blocked | Timed out |
+| Apple's captive portal check | No portal | Success |
+| Ping between two guest clients | Blocked by isolation | 0 of 3 |
+| The same two clients on the main network | Allowed, the positive control | 3 of 3 |
+
+Three things stay open, all low priority. Ping to the guest gateway fails although the built-in rule allows it. The zone's hit counters do not match the tests: the rules aimed at the private ranges stayed at zero while a different built-in rule counted thousands. And the wired path on the guest port is untested. The portal listener on the gateway answers guests with an HTTP error even with no portal enabled; I accepted that rather than block it, since a future portal would need it. See [case study 20](case-studies.md#20-a-guest-network-that-needed-no-custom-rules).
+
+Later phases, in order: WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs delivered to a Mac through an Intune WiFi profile, and a time-boxed VPN lab that ends with every server turned off.
 
 ## Host firewalling
 

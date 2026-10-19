@@ -1,6 +1,6 @@
 # Roadmap
 
-Open faults, known gaps and next work, as of 18 October 2026. Listed in priority order within each group.
+Open faults, known gaps and next work, as of 19 October 2026. Listed in priority order within each group.
 
 ## Done since the last snapshot (12 October)
 
@@ -8,6 +8,7 @@ Open faults, known gaps and next work, as of 18 October 2026. Listed in priority
 - Zone-based firewall with a Lab zone and five policies, and the lab VM moved onto the Lab VLAN with every allow and deny path proved. [Networking](networking.md#zone-based-firewall-and-the-lab-vlan).
 - The gateway's mDNS proxy turned off after a capture showed it reflecting the estate into the lab. [Case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
 - IoT zone for the speaker pair, with app control on one port and the mDNS proxy scoped to two networks and one service. [Networking](networking.md#iot-zone-for-the-speaker-pair).
+- Guest network on the gateway's built-in guest zone: internet only, client isolation proved against a positive control. [Networking](networking.md#guest-network).
 - Open WebUI in its own container in front of llm01, backed up and probed.
 - work01's game library moved to a disk with no backup: archive from 447 GiB back to 36.8 GiB. [Case study 19](case-studies.md#19-a-desktop-backup-that-grew-from-24-to-447-gib).
 - NAS: SFTP and rsync off, port 22 closed, DDNS entry removed, monthly data scrubbing scheduled, volume encryption recorded.
@@ -21,7 +22,7 @@ Open faults, known gaps and next work, as of 18 October 2026. Listed in priority
 
 ## Open faults
 
-- **RTX 5070 Ti link stability.** Slot capped at Gen4. Closes after seven consecutive clean cold boots. Five are logged. Two were checked after the fact from llm01's persistent journal, since they followed manual shutdowns. If a load fault recurs at Gen4, the riser gets replaced. See [case study 1](case-studies.md#1-a-gpu-that-fell-off-the-bus-gen5-over-a-gen4-cable).
+- **RTX 5070 Ti link stability.** Slot capped at Gen4. Closes after seven consecutive clean cold boots. Six are logged. Two were checked after the fact from llm01's persistent journal, since they followed manual shutdowns. If a load fault recurs at Gen4, the riser gets replaced. See [case study 1](case-studies.md#1-a-gpu-that-fell-off-the-bus-gen5-over-a-gen4-cable).
 - **edit01 boot stalls at a text cursor** before the login screen, with signal present. Leads, in order: a boot step waiting on network storage the new zone now blocks, the display manager or NVIDIA driver failing to start, and the missing CPU pinning that work01 carries. First step: a text console and the boot's error log. Then finish its checks on the Untrusted network.
 - **Then: move the firmware's primary display to the integrated GPU,** so firmware stops initialising a card that VFIO later takes. Held back until the link test closes.
 - **Wake-on-LAN from power-off fails.** The earlier suspect, a forced link speed, turned out not to exist: the NIC autonegotiates. The remaining suspect is the NIC's link on standby power. Diagnosis planned for the next shutdown.
@@ -30,16 +31,16 @@ Open faults, known gaps and next work, as of 18 October 2026. Listed in priority
 ## Gateway roadmap
 
 1. Retire the old UniFi controller container from 13 November, after a 30-day safety net: protected final archive, out of the backup pool, destroyed, its commented probe deleted.
-2. **Next:** a guest network on the access point and a spare switch port, internet only.
-3. WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs, with the WiFi profile delivered to a Mac by Intune.
-4. A time-boxed WireGuard and Teleport lab, torn down afterwards.
-5. A syslog receiver for firewall and IPS logs.
-6. Open question: the block-to-gateway counter on each segmented network rises with no client on the VLAN. Most likely the gateway's own traffic, not proven.
-7. Name the two unidentified things the speakers try: a gateway service and a connection toward the main network. Needs the syslog receiver.
+2. **Next:** WPA2-Enterprise with the gateway's RADIUS server and dynamic VLANs, with the WiFi profile delivered to a Mac by Intune.
+3. A time-boxed WireGuard and Teleport lab, torn down afterwards.
+4. A syslog receiver for firewall and IPS logs.
+5. Open question: the block-to-gateway counter on each segmented network rises with no client on the VLAN. Most likely the gateway's own traffic, not proven.
+6. Name the two unidentified things the speakers try: a gateway service and a connection toward the main network. Needs the syslog receiver.
+7. Guest network loose ends: ping to the guest gateway fails, the guest zone's counters do not match the tests, and the wired guest port is untested.
 
 ## Monitoring and power
 
-1. Run the NAS's first data scrub by hand and record its duration. Monthly runs start in November.
+1. Record the result and duration of the NAS's first data scrub, started by hand on 19 October. Monthly runs start in November.
 2. Check the next work01 archive lands near the desktop's used space, not hundreds of GiB.
 3. Check the NAS certificate renewal lands around 24 October. The expiry metric should read about 90 days afterwards.
 4. Check the BIOS setting that decides whether the host boots itself when the UPS restores power.
