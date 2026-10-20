@@ -1,6 +1,6 @@
 # M365 and Intune labs
 
-A Microsoft 365 Business Premium tenant with one licensed user, plus a Windows Enterprise E3 licence bought for the Remediations lab. Business Premium covers Intune Plan 1, Entra ID P1, Autopilot and Defender for Business.
+A Microsoft 365 Business Premium tenant with one licensed user, plus a Windows Enterprise E3 licence bought for the Remediations lab and ended once the lab was done. Business Premium covers Intune Plan 1, Entra ID P1, Autopilot and Defender for Business.
 
 I reactivated a dormant tenant rather than starting fresh. The custom domain can only be verified in one tenant, and year-old leftover objects turned out to be good lab material.
 
@@ -22,7 +22,7 @@ Every lab follows the same pattern: record the state as found, change one thing,
 | Update ring | Complete |
 | Web content filtering, Edge and Firefox | Complete |
 | RHEL 10 enrolment, custom compliance, Conditional Access | Complete, VM since deleted |
-| Remediations | In progress |
+| Remediations | Complete |
 | Purview: sensitivity label, DLP, retention, eDiscovery | Complete except retention label, which is still propagating |
 
 ## Tenant baseline
@@ -240,14 +240,32 @@ CA001 was extended to Linux, and both the allow path and a block path (firewalld
 
 The VM was deleted after the lab, with its Intune and Entra records removed first.
 
-## Remediations (in progress)
+## Remediations
 
 Remediations is not licensed by Business Premium. It needs Windows Enterprise E3 or E5 per user. The portal gates it behind a tenant attestation checkbox. Ticking it without the licence would be a false attestation, so I bought a Windows Enterprise E3 licence for the lab.
 
-Package: detect whether File Explorer hides file extensions, and fix it. Runs as the signed-in user, hourly.
+Package: PowerShell detection and remediation for one per-user setting, whether File Explorer hides file extensions. Runs as the signed-in user, hourly, on the Autopilot lab device.
 
 - On-demand run proven in the device log: detection found drift, remediation fixed it, post-detection passed.
-- Still owed: the scheduled run fixing drift unaided, and the portal's device status with pre and post output.
+- **Scheduled runs fixed drift unaided three times.** The first had happened two weeks earlier and was never read, because the session ended before the hourly run. The Intune Management Extension's log still held it, so I counted that day's lines before repeating the test. Two fresh drift tests then fixed in under an hour each, proven by the log, the registry and the portal's Device status with pre- and post-remediation output.
+
+| Evidence | Result |
+|---|---|
+| Device log, run after the drift | Detect found the drift, remediation fixed it, post-detect passed, exit codes 1, 0, 0 |
+| Registry and File Explorer | Value back to the compliant setting, extensions shown |
+| Portal, Device status | With issues, Issue fixed, pre-remediation output showing the drift, post-remediation output showing it fixed |
+| Portal, overview tiles | With issues 1, Issue fixed 1 |
+
+Findings:
+
+- **Device status shows only the latest uploaded result.** An hour after a fix it read Without issues and Not run, with no trace of the fix. Take the screenshot inside the hour.
+- **The agent appears to upload a result only when it changes.** Five unchanged hourly results produced no uploads, and a scheduled fix identical to the on-demand fix before it never reached the portal. Read from one device's log, not documented.
+- **The daily trend chart is not evidence.** It showed zero fixes on both days with fixes.
+- **The hourly schedule drifts later on every run,** by seconds to about two minutes. Time a drift test from the last logged run.
+
+Limits: one device and one user, user context only, unsigned scripts, no failed run to show failure handling.
+
+**Wind-down.** The package's assignment was removed and kept as evidence, the licence attestation withdrawn, and the E3 set to end at its term. One mistake: I removed the E3 before confirming the Windows Business plan was back on my account, the reverse of the planned order. The admin centre shows that plan ticked, but the user's licence record never changed. Proving a licence change from `licenseAssignmentStates` in Graph, not the admin centre panel, is how I found it. It is on the roadmap.
 
 ## Purview and Microsoft 365 apps (AB-900 study labs)
 

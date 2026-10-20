@@ -34,7 +34,7 @@ Two GPUs are passed through with VFIO. The host never loads a driver for either.
 
 | GPU | Slot | Assigned to | Notes |
 |---|---|---|---|
-| RTX 5070 Ti | PCIEX16_1, vertical mount on a 600 mm riser rated PCIe 4.0 | llm01 only | Slot capped at Gen4 in BIOS since October 2026. See [case study 1](case-studies.md#1-a-gpu-that-fell-off-the-bus-gen5-over-a-gen4-cable). |
+| RTX 5070 Ti | PCIEX16_1, vertical mount on a 600 mm riser rated PCIe 4.0 | llm01 only | Slot capped at Gen4 in BIOS since October 2026, closed after nine clean cold boots. The firmware's primary display is the integrated GPU, so neither card is initialised by firmware for the host. See [case study 1](case-studies.md#1-a-gpu-that-fell-off-the-bus-gen5-over-a-gen4-cable). |
 | RTX 5080 | PCIEX16_2, direct | Shared by work01 and edit01 | Only one of the two VMs can hold it at a time |
 
 Both x16 slots run x8/x8 with both populated.
@@ -84,7 +84,7 @@ A separate NVMe drive in a USB enclosure is a Ventoy boot drive with checksum-ve
 |---|---|---|---|
 | llm01 | Ubuntu 24.04 | RTX 5070 Ti | Headless Ollama, `gpt-oss:20b` as the main model with a 32K context. Also hosts Stable Diffusion WebUI Forge, which is stopped unless needed because it competes for VRAM. |
 | work01 | CachyOS, KDE Plasma 6 on Wayland | RTX 5080 (shared) | Daily work desktop, driving a TV, on the Untrusted VLAN. Obsidian synced through Syncthing. A game library lives on a second virtual disk that is excluded from backup. |
-| edit01 | Rocky Linux 8.6 | RTX 5080 (shared) | DaVinci Resolve, NVIDIA open kernel module pinned to a known-good version. On the Untrusted VLAN. Known issue: boot currently stalls at a text cursor before the login screen. |
+| edit01 | Rocky Linux 8.10 | RTX 5080 (shared) | DaVinci Resolve, NVIDIA open kernel module pinned to a known-good version and installed with DKMS, so kernel updates rebuild it. On the Untrusted VLAN. See [case study 21](case-studies.md#21-a-video-editing-vm-that-booted-to-a-cursor). |
 | win11-ap01 | Windows 11 Pro 26H2 | none | Intune lab device on its own Lab VLAN and firewall zone. Registered with Autopilot, Entra joined, enrolled, compliant, BitLocker on, Defender onboarded. Disposable by design. |
 
 ### Containers (LXC)

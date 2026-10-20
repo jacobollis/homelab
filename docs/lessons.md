@@ -174,3 +174,24 @@ Operating principles from running this estate. Each one cost me time before I wr
 - **An isolation test needs a positive control.** Zero replies between two guests prove nothing until the same pair answers on a network without isolation.
 - **A UniFi hit counter shows where the gateway counted a packet, not which rule blocked it.** Prove a deny from the client.
 - **Give a real example value in a command, never a placeholder.** A placeholder address was run as typed.
+
+## GPU closure, updates and edit01
+
+- **Check the kernel command line before choosing a log line as a verify gate.** With `initcall_blacklist=sysfb_init`, the `vgaarb` boot VGA line ignores the firmware's primary display setting.
+- **Holding kernel meta-packages does not freeze a kernel that is already installed.** Read `uname -r` and the dpkg log before recording which kernel a test ran on.
+- **A record kept across several chats can miss entries.** Gather every reading before closing a count.
+- **A transitional metapackage can be the only thing keeping the real driver installed.** Mark the real package manual before removing the transitional one.
+- **Audit a hypervisor's package sources before upgrading it.**
+- **On Proxmox, upgrade with `apt full-upgrade`,** and confirm the old kernel stays in the boot menu as the fallback.
+- **Install out-of-tree drivers with DKMS.** A `.run` install without it breaks on the next kernel update.
+- **Ask the guest agent before debugging a black screen.** It separates a failed display stack from a stuck boot.
+- **"Login incorrect" can mean the wrong user name.**
+- **A command-not-found prompt can install packages.** Read it before answering.
+
+## Remediations
+
+- **Read the device log before rerunning a test whose result was never captured.** The log may still hold it.
+- **Intune Remediations Device status shows only the latest uploaded result.** Screenshot within the hour after the fixing run.
+- **Time a drift test from the last logged run, not the clock.** The hourly schedule slides later.
+- **Prove a licence change from `licenseAssignmentStates`, not the admin centre panel.** The panel can show a change that never landed.
+- **Make the change that grants before removing the one that conflicts.** Prove it, then remove.

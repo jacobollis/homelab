@@ -138,7 +138,7 @@ Evidence from work01 after the move:
 | SMB to the NAS, same test method | Allowed | Opened, the positive control |
 | discord.com | Blocked by the application policy | Never loaded, policy counter at 140 |
 
-edit01 is tagged onto the network but not yet tested on it. Its boot currently stalls at a text cursor before the login screen, which is on the roadmap.
+edit01 passed its checks on the network once its boot fault was fixed ([case study 21](case-studies.md#21-a-video-editing-vm-that-booted-to-a-cursor)): a reserved lease on the Untrusted network, internet, Tailscale showing only internet peers, and DaVinci Resolve working.
 
 ## IoT zone for the speaker pair
 

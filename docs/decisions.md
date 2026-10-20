@@ -153,3 +153,7 @@ The replacement Mac uses Platform SSO with the Secure Enclave method: phishing-r
 ## The guest network uses the gateway's built-in guest zone
 
 The Hotspot zone's built-in rules already block every private range and allow DNS and DHCP to the gateway. A custom zone would have meant writing and maintaining the same rules by hand. No captive portal: the SSID is password-protected and the portal adds nothing for a household. Client isolation is on.
+
+## Docker stays in guests, never on the hypervisor
+
+An unrecorded Docker Engine on the Proxmox host set the FORWARD policy to DROP, one sysctl away from cutting off every bridged guest. Containers run inside LXCs or VMs. Before any host upgrade, I compare the host's package sources with my notes. [Case study 22](case-studies.md#22-a-docker-engine-on-the-hypervisor-that-nobody-recorded).

@@ -1,6 +1,6 @@
 # Roadmap
 
-Open faults, known gaps and next work, as of 19 October 2026. Listed in priority order within each group.
+Open faults, known gaps and next work, as of 20 October 2026. Listed in priority order within each group.
 
 ## Done since the last snapshot (12 October)
 
@@ -8,6 +8,10 @@ Open faults, known gaps and next work, as of 19 October 2026. Listed in priority
 - Zone-based firewall with a Lab zone and five policies, and the lab VM moved onto the Lab VLAN with every allow and deny path proved. [Networking](networking.md#zone-based-firewall-and-the-lab-vlan).
 - The gateway's mDNS proxy turned off after a capture showed it reflecting the estate into the lab. [Case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
 - IoT zone for the speaker pair, with app control on one port and the mDNS proxy scoped to two networks and one service. [Networking](networking.md#iot-zone-for-the-speaker-pair).
+- RTX 5070 Ti link investigation closed after nine clean cold boots at Gen4, then the firmware's primary display moved to the integrated GPU. [Case study 1](case-studies.md#1-a-gpu-that-fell-off-the-bus-gen5-over-a-gen4-cable).
+- edit01's boot fault fixed and its checks on the Untrusted network finished. [Case study 21](case-studies.md#21-a-video-editing-vm-that-booted-to-a-cursor).
+- Host and llm01 upgraded, an unrecorded Docker Engine removed from the host first. [Case study 22](case-studies.md#22-a-docker-engine-on-the-hypervisor-that-nobody-recorded).
+- Remediations lab complete: scheduled drift correction proved three times, then the licence wound down. [M365 labs](m365-endpoint-labs.md#remediations).
 - Guest network on the gateway's built-in guest zone: internet only, client isolation proved against a positive control. [Networking](networking.md#guest-network).
 - Open WebUI in its own container in front of llm01, backed up and probed.
 - work01's game library moved to a disk with no backup: archive from 447 GiB back to 36.8 GiB. [Case study 19](case-studies.md#19-a-desktop-backup-that-grew-from-24-to-447-gib).
@@ -22,11 +26,7 @@ Open faults, known gaps and next work, as of 19 October 2026. Listed in priority
 
 ## Open faults
 
-- **RTX 5070 Ti link stability.** Slot capped at Gen4. Closes after seven consecutive clean cold boots. Six are logged. Two were checked after the fact from llm01's persistent journal, since they followed manual shutdowns. If a load fault recurs at Gen4, the riser gets replaced. See [case study 1](case-studies.md#1-a-gpu-that-fell-off-the-bus-gen5-over-a-gen4-cable).
-- **edit01 boot stalls at a text cursor** before the login screen, with signal present. Leads, in order: a boot step waiting on network storage the new zone now blocks, the display manager or NVIDIA driver failing to start, and the missing CPU pinning that work01 carries. First step: a text console and the boot's error log. Then finish its checks on the Untrusted network.
-- **Then: move the firmware's primary display to the integrated GPU,** so firmware stops initialising a card that VFIO later takes. Held back until the link test closes.
 - **Wake-on-LAN from power-off fails.** The earlier suspect, a forced link speed, turned out not to exist: the NIC autonegotiates. The remaining suspect is the NIC's link on standby power. Diagnosis planned for the next shutdown.
-- **Host and llm01 package updates** are held until the GPU test closes, so a kernel change does not muddy the result.
 
 ## Gateway roadmap
 
@@ -63,7 +63,7 @@ Open faults, known gaps and next work, as of 19 October 2026. Listed in priority
 ## Lab work
 
 - Replacement Mac: corporate enrolment through Company Portal, Platform SSO with the Secure Enclave method, FileVault escrow. [Plan](m365-endpoint-labs.md#next-platform-sso-on-a-replacement-mac-planned).
-- Finish Remediations, before early December: the scheduled run and the portal device status.
+- Restore the Windows Business plan on my account. The admin centre shows it saved, but the user's licence record has not changed since before the save.
 - Retention label: apply it once it propagates.
 - Sensitivity label: open the protected file in Word desktop as an outside identity to evidence the refusal.
 - Research whether a standard user's one-click override of a threat-intelligence block can be prevented. Record nothing until it is verified.

@@ -4,7 +4,7 @@ Each entry gives the symptom, what I checked, what settled it and what changed. 
 
 ## 1. A GPU that fell off the bus: Gen5 over a Gen4 cable
 
-**Status: fix under test.**
+**Status: closed, October 2026.**
 
 **Symptom.** The RTX 5070 Ti in llm01 crashed and recovered under bursty load (Xid 13, 31 and 109) and stayed clean under continuous load. One morning it fell off the bus during driver initialisation at boot (Xid 79). The guest then logged `RmInitAdapter failed` every 30 seconds. The host logged `vfio_bar_restore: reset recovery - restoring BARs`, meaning the card had lost its config space.
 
@@ -18,9 +18,11 @@ Each entry gives the symptom, what I checked, what settled it and what changed. 
 
 **Change.** Slot capped at Gen4 in BIOS. Confirmed at the root port with `lspci -vvv` showing `Target Link Speed: 16GT/s`. A load test of 20 model load and unload cycles across the link showed generation between 1 and 4, never 5, with no Xid and no lane errors.
 
-**Since then.** `Llm01GpuAbsent` now alerts if the card is missing at boot, so a failed morning cannot pass unnoticed again. See [monitoring](monitoring-and-backups.md#gpu-absent-alert). The cold-boot record has started.
+**Since then.** `Llm01GpuAbsent` now alerts if the card is missing at boot, so a failed morning cannot pass unnoticed again. See [monitoring](monitoring-and-backups.md#gpu-absent-alert).
 
-**Why it is not closed.** One boot failure is one event. The host powers off nightly, so every morning is a cold boot through the failure point. Seven consecutive clean mornings closes it. A second suspect, the card also being the firmware's boot VGA device, is deliberately left unchanged until then, so the result has one variable.
+**How it closed.** One boot failure is one event, so I set a bar before calling it: seven consecutive clean cold boots at Gen4, each through the driver initialisation where the card had failed. The host powers off most nights, so most mornings are a test. Nine clean cold boots came in over eight days, with `nvidia-smi` listing the card, no Xid lines and `LaneErrStat` at zero. Two of them were logged in a separate chat and nearly missed from the count. The boots ran on two guest kernels, because a kernel update had landed earlier than my notes said, which points the result further at the link speed and away from the kernel. Running the link beyond the cable's rating was the cause. I did not rerun Gen5 as a positive control once the cap was in.
+
+**The second suspect, changed after.** The card was also the firmware's primary display, so the firmware initialised it at every boot before VFIO took it. I left that alone until the record closed, so the result had one variable, then moved the primary display to the integrated GPU. The verify gate I had written for it was wrong: the kernel's `vgaarb` line still named the 5070 Ti as boot VGA afterwards. This host boots with `initcall_blacklist=sysfb_init`, and without sysfb the kernel picks the lowest-addressed VGA device whatever the firmware setting. The evidence for the change is where the firmware screen now appears.
 
 **Also learned.** A previous incident with the same `RmInitAdapter` lines had been credited to a hypervisor-hiding CPU flag. Those lines are what a card produces after falling off the bus. The full VM stop and start that applied the flag also reset the card, and that most likely fixed it. I kept the flag and corrected the record.
 
@@ -273,3 +275,36 @@ The cause was the gateway's mDNS proxy, set to Auto. On Auto it reflects every n
 **What I could not explain.** The hit counters. The rules that should have blocked the private ranges stayed at zero, a different built-in rule counted thousands, and the captive portal rules counted with no portal enabled. A counter shows where the gateway logged a packet, not which rule decided its fate. The deny is proven from the client. The attribution waits for a syslog receiver.
 
 **Lessons.** Read a zone's built-in rules after the network joins it. Read the live port list before changing a port. Reread a whole form after it changes mode. Strip the test client of overlays first. Pair every isolation test with a positive control. Treat hit counters as supporting evidence only.
+
+## 21. A video-editing VM that booted to a cursor
+
+**Symptom.** edit01 showed the firmware splash and the boot menu, then a black screen with a white cursor. The TV had signal. It had gone unnoticed for weeks.
+
+**Leads, before looking.** It was the VM's first boot on a new firewall zone and on a newly upgraded host kernel, so both were suspects. So was missing CPU pinning.
+
+**What settled it, in order.**
+
+1. `qm agent 104 ping` and `network-get-interfaces` from the host. The guest agent answered, with an address on the new network. The OS and the network were up under the black screen. That ruled out the network lead in a minute.
+2. A text console. `nvidia-smi` could not reach the driver. The display manager had failed three times to start the display server.
+3. `rpm -q kernel --last` and the module tree. The NVIDIA module existed only for the previous kernel. A routine `dnf upgrade` six weeks earlier had installed a newer kernel and made it the default.
+4. The VM config. CPU pinning was already set, so my notes were wrong on that point too.
+
+**Cause.** The NVIDIA driver had been installed with NVIDIA's `.run` installer without DKMS, so it was built for one kernel only. With nouveau blacklisted, the first boot on the new kernel had no display driver. The fault predated both the firewall move and the host upgrade.
+
+**Change.** Snapshot first. Installed the same driver version again with `--dkms` on the running kernel. `dkms status` then listed it for that kernel, and future kernel updates rebuild it. After a reboot the login screen came up, `nvidia-smi` showed the card, and DaVinci Resolve opened. I then finished the VM's checks on its firewall zone: lease, internet, and Tailscale showing internet-only peers.
+
+**Also corrected.** My notes had the OS as Rocky Linux 8.6; it had been 8.10 since its build. An attempt to check `dkms` on a system without it triggered PackageKit's prompt, and answering yes installed a package: a change I made without meaning to.
+
+**Lessons.** Ask the guest agent before debugging a black screen. Install out-of-tree drivers with DKMS, and check `dkms status` after a guest kernel update, before the reboot. Read the release file before recording a guest's OS.
+
+## 22. A Docker engine on the hypervisor that nobody recorded
+
+**Context.** A planned upgrade of the Proxmox host, held for a week until the GPU test closed: 191 packages and a new kernel.
+
+**Found first.** `apt update` listed a Docker package source. `dpkg -l` showed Docker Engine and containerd installed two months earlier, with no containers and no images, and nothing in my notes. The install date matched the day I hand-built a container that runs Docker Compose. The likeliest explanation is that container's install command run in the host shell. I cannot prove it.
+
+**Why it mattered.** Docker sets the iptables FORWARD policy to DROP. Guest traffic on the Proxmox bridge was unaffected only because `net.bridge.bridge-nf-call-iptables` was 0. Turning on the Proxmox firewall for any guest NIC can set it to 1, and then every bridged guest packet would meet Docker's DROP. A latent outage, waiting for an unrelated change.
+
+**Change.** Stopped Docker and containerd, purged the packages, deleted their data directories, the package source and its key. The next `apt update` showed no Docker source. Then the upgrade, with `apt full-upgrade` so the new kernel package came in, and the old kernel kept in the boot menu as the fallback. After the reboot, the FORWARD policy read ACCEPT, every guest came back, both GPUs were bound to vfio-pci, and both drove their VMs on the new kernel.
+
+**Lessons.** Audit a hypervisor's package sources against your notes before upgrading it. Check `dpkg -l` for anything that belongs in a guest. Keep Docker in guests.
