@@ -204,3 +204,24 @@ Operating principles from running this estate. Each one cost me time before I wr
 - **Check which domain each break-glass account is on.** One was on the custom domain, contrary to my notes.
 - **Test break-glass access from a private window.** It presents no device identity, which is the case the exclusion exists for.
 - **Read the sign-in log per resource.** One portal session produced one resource outside the policy and another inside it.
+
+## Platform SSO
+
+- **Platform SSO is assigned to users, not devices.** A design that waits on an empty device group does not work. Assign the user group and pilot on an existing Mac.
+- **Under Platform SSO, the device identity goes only to the Entra account registered in that macOS user.** Give each Entra account its own macOS user.
+- **A second macOS user registers through the Platform SSO prompt at login.** Company Portal sign-in there is device enrolment, and fails on a Mac that is already enrolled.
+- **Platform SSO replaces the Mac's Entra registered object with a joined one.** Apps on old tokens fail until they sign in again. Wait for Intune's next check-in before treating it as a fault.
+- **Intune's device page carries two IDs.** Match an Entra object only against the field labelled Microsoft Entra device ID.
+- **An Office 365 compliant-device policy reaches the admin portals.** The break-glass accounts are the recovery path, not the policy's scope.
+- **Export interactive and non-interactive sign-ins together.**
+- **Crop the Activation Lock bypass code** from every Intune device screenshot.
+
+## Exit nodes
+
+- **An exit node's value is where traffic leaves, not the route to it.**
+- **Prove an exit node's purpose against the service itself** before building it out.
+- **Buy from the datacentre operator, not a country-named reseller.**
+- **A Tailscale `ssh` rule needs a network grant to the same destination.** A timeout with the node online points at the ACL first.
+- **Close public SSH at the provider's firewall,** and keep the provider's console as the way back in.
+- **Check that `unattended-upgrades` is actually switched on** by reading the APT setting back.
+- **A port that times out while the provider panel reads "installing" is not yet a fault.** Wait, and run a positive control on the same port elsewhere.

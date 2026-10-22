@@ -8,6 +8,8 @@ Open faults, known gaps and next work, as of 22 October 2026. Listed in priority
 - Zone-based firewall with a Lab zone and five policies, and the lab VM moved onto the Lab VLAN with every allow and deny path proved. [Networking](networking.md#zone-based-firewall-and-the-lab-vlan).
 - The gateway's mDNS proxy turned off after a capture showed it reflecting the estate into the lab. [Case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
 - IoT zone for the speaker pair, with app control on one port and the mDNS proxy scoped to two networks and one service. [Networking](networking.md#iot-zone-for-the-speaker-pair).
+- Platform SSO with the Secure Enclave method piloted on the Mac mini, with admin work moved to its own macOS user. [M365 labs](m365-endpoint-labs.md#platform-sso-pilot-on-the-mac-mini).
+- A Norwegian exit node built and hardened, and the inert SSH rule to the exit nodes fixed with one narrow grant. [Case study 23](case-studies.md#23-an-exit-node-bought-for-its-ip-and-an-ssh-rule-that-did-nothing).
 - Separate cloud-only admin account in place, admin roles removed from my daily account, break-glass accounts rechecked. [M365 labs](m365-endpoint-labs.md#separate-admin-account).
 - RTX 5070 Ti link investigation closed after nine clean cold boots at Gen4, then the firmware's primary display moved to the integrated GPU. [Case study 1](case-studies.md#1-a-gpu-that-fell-off-the-bus-gen5-over-a-gen4-cable).
 - edit01's boot fault fixed and its checks on the Untrusted network finished. [Case study 21](case-studies.md#21-a-video-editing-vm-that-booted-to-a-cursor).
@@ -59,11 +61,12 @@ Open faults, known gaps and next work, as of 22 October 2026. Listed in priority
 - A dedicated least-privilege NAS account for the work desktop's file share mount.
 - A NAS-only DNS token for its certificate renewals. The Proxmox host already has its own.
 - A dedicated Tailscale tag for the subnet router, so route auto-approval applies to it alone.
-- Test, then fix or delete, the SSH rule to the exit nodes.
+- Retire the Finnish exit node once the Norwegian one has run a week, and update Tailscale on the other exit nodes and the NAS.
+- Narrow the admin account's roles to those it uses, with Global Administrator kept on the break-glass accounts.
 
 ## Lab work
 
-- Replacement Mac: corporate enrolment through Company Portal, Platform SSO with the Secure Enclave method, FileVault escrow. [Plan](m365-endpoint-labs.md#next-platform-sso-on-a-replacement-mac-planned).
+- Replacement Mac: corporate enrolment through Company Portal, Platform SSO with the Secure Enclave method, a separate macOS user for admin work, FileVault escrow. [Plan](m365-endpoint-labs.md#next-platform-sso-on-a-replacement-mac-planned).
 - Restore the Windows Business plan on my account. The admin centre shows it saved, but the user's licence record has not changed since before the save.
 - Retention label: apply it once it propagates.
 - Sensitivity label: open the protected file in Word desktop as an outside identity to evidence the refusal.

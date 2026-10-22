@@ -58,6 +58,8 @@ It is a personal phone. App protection on Outlook, Teams and Edge plus a Conditi
 
 Requiring a compliant device for all resources includes the Entra and Intune admin portals. A mistake in the policy could lock me out of the tools needed to undo it.
 
+**Corrected in October.** Targeting Office 365 does not keep the admin portals out of scope. They request tokens for Office 365 services, and an admin sign-in with no device identity was refused in Entra as well. I kept the Office 365 target, since it still keeps the policy off most non-Office resources, but the protection against locking myself out is the two break-glass accounts that every policy excludes, not the policy's scope.
+
 ## The NAS service mailbox is excluded from Conditional Access
 
 The NAS authenticates from a device that will never be compliant. Without the exclusion, NAS alerting fails silently. The mailbox has interactive sign-in blocked.
@@ -148,7 +150,7 @@ Automated Device Enrollment needs Apple Business, and Apple Business verificatio
 
 ## Platform SSO with the Secure Enclave method
 
-The replacement Mac uses Platform SSO with the Secure Enclave method: phishing-resistant, unlocked with Touch ID, and the local password stays local. Password sync is the only method that ties the Mac password to Entra, and I do not want that. Microsoft allows one SSO extension payload per device, so the Platform SSO policy targets its own group, which the Mac mini's older SSO extension profile excludes.
+The replacement Mac uses Platform SSO with the Secure Enclave method: phishing-resistant, unlocked with Touch ID, and the local password stays local. Password sync is the only method that ties the Mac password to Entra, and I do not want that. Microsoft allows one SSO extension payload per device, and supports Platform SSO on user assignments only. So the policy is assigned to a user group, and the Mac mini's older SSO extension profile was unassigned when the Mac mini moved over.
 
 ## The guest network uses the gateway's built-in guest zone
 
@@ -160,4 +162,12 @@ An unrecorded Docker Engine on the Proxmox host set the FORWARD policy to DROP, 
 
 ## Administration from a separate cloud-only account
 
-Business Premium has no Privileged Identity Management, so a separate account is the practical control. The admin account is cloud-only, unlicensed and used only from its own browser profile. My daily account holds no admin role, so an accidental sign-in or consent prompt cannot become an organisation-wide decision again.
+Business Premium has no Privileged Identity Management, so a separate account is the practical control. The admin account is cloud-only and used only from its own macOS user on a managed Mac. It holds Intune and Entra ID P1 licences but no productivity apps or mailbox. My daily account holds no admin role, so an accidental sign-in or consent prompt cannot become an organisation-wide decision again.
+
+## Admin work gets its own macOS user, not a policy exclusion
+
+Under Platform SSO, a second Entra account in the same macOS user signs in as an unknown device. Excluding the admin account from the compliant-device policy would have fixed that by putting the most privileged account under the weakest rule. A separate macOS user registered with Platform SSO keeps the admin account inside the policy.
+
+## A Norwegian exit node, bought for its IP
+
+An exit node is where traffic leaves the tailnet, so a distant one adds a detour for anything near home. The reason to have one in Norway is a Norwegian IP, for geo-restricted Norwegian TV used for language study. It replaces the Finnish exit node rather than adding a fourth for good. I bought it from the datacentre operator, not from a country-named reseller of the same servers, because an exit node's value depends on the provider's IP reputation. [Case study 23](case-studies.md#23-an-exit-node-bought-for-its-ip-and-an-ssh-rule-that-did-nothing).

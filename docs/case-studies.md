@@ -308,3 +308,23 @@ The cause was the gateway's mDNS proxy, set to Auto. On Auto it reflects every n
 **Change.** Stopped Docker and containerd, purged the packages, deleted their data directories, the package source and its key. The next `apt update` showed no Docker source. Then the upgrade, with `apt full-upgrade` so the new kernel package came in, and the old kernel kept in the boot menu as the fallback. After the reboot, the FORWARD policy read ACCEPT, every guest came back, both GPUs were bound to vfio-pci, and both drove their VMs on the new kernel.
 
 **Lessons.** Audit a hypervisor's package sources against your notes before upgrading it. Check `dpkg -l` for anything that belongs in a guest. Keep Docker in guests.
+
+## 23. An exit node bought for its IP, and an SSH rule that did nothing
+
+**Context.** I wanted a Norwegian IP for Norwegian TV that is limited to Norway, for language study. My first reason was the direct undersea links from the UK to Norway. That reason was wrong: an exit node is where traffic leaves, so for anything in the UK a Norwegian exit is a detour. The UK exit stays the daily default.
+
+**Choosing the provider.** The first offer I found was a VPS site named after the country. Its page named a third-party company, ran orders through another company's client area, sat on a Norwegian datacentre operator's servers, and contradicted itself on location, cores and refunds. I bought direct from the datacentre operator instead.
+
+**The test before the build.** An IP lookup site proves geolocation only. Streaming services also check datacentre ranges, so the go/no-go was a programme that plays only in Norway. It played, so I kept the server.
+
+**Build and hardening.**
+
+- Tailscale installed and advertised as an exit node under the existing exit-node tag. The image had no `curl`, so the install script failed first and the next pasted line ran anyway, harmlessly.
+- Password and keyboard-interactive SSH off, then public TCP 22 dropped at the provider's firewall rather than on the host, so a host-side mistake cannot lock me out. A port test from home then timed out, as intended. The way back in is the provider's console, with the root password in my password manager.
+- `unattended-upgrades` installed. It did not switch itself on: the APT setting read empty until I wrote the config by hand and read it back.
+
+**The SSH rule.** My policy had a Tailscale `ssh` rule to the exit-node tag, recorded for weeks as probably inert because no network grant reached that tag. `tailscale ssh` to the new node timed out with the node online, which confirmed it. I added one narrow grant, members to the exit-node tag on TCP 22 only. After that, Tailscale SSH opened a root shell on the new node and on the UK node. Tailnet traffic arrives inside WireGuard over UDP, so the provider firewall rule on TCP 22 does not affect it.
+
+**Lessons.** Pick an exit node's location for the IP it gives you. Test the purpose against the service itself before building out. A Tailscale `ssh` rule needs a network grant to the same destination. Close public SSH at the provider, and keep a console route in.
+
+**Still to do.** Retire the Finnish exit node after a week of running the new one, and update the Tailscale clients on the older exit nodes.

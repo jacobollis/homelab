@@ -14,7 +14,8 @@ Every lab follows the same pattern: record the state as found, change one thing,
 | Windows Autopilot, user-driven, Entra joined | Complete |
 | Conditional Access, require compliant device | Complete, enforced |
 | macOS enrolment, compliance, SSO extension, Defender | Complete |
-| macOS corporate enrolment with Platform SSO on a second Mac | Planned, from late October |
+| Platform SSO with the Secure Enclave method, piloted on the Mac mini | Complete |
+| macOS corporate enrolment with Platform SSO on a second Mac | Planned, once the Mac arrives |
 | Android Enterprise fully managed, compliance, Defender | Complete |
 | iPhone app protection without enrolment | Complete, enforced |
 | Windows compliance and BitLocker | Complete |
@@ -68,7 +69,7 @@ An existing "Compliant Devices" policy from 2025 had **no target resources**, so
 ### CA001: require a compliant device for Office 365
 
 - All users, excluding the two break-glass accounts and the NAS service mailbox. The service exclusion is load-bearing: the NAS signs in from a device that will never be compliant.
-- Target: Office 365, not All resources. Requiring a compliant device for all resources includes the Entra and Intune portals, so one mistake could lock me out of the tools needed to undo it.
+- Target: Office 365, not All resources. Requiring a compliant device for all resources includes the Entra and Intune portals, so one mistake could lock me out of the tools needed to undo it. **Corrected in October:** the Office 365 target does not keep the admin portals out. They request tokens for Office 365 services such as Exchange Online and SharePoint, and an admin sign-in with no device identity was refused in the Entra admin centre too. The recovery path is the break-glass accounts, which every policy excludes. See the [Platform SSO pilot](#platform-sso-pilot-on-the-mac-mini).
 - Platforms: Windows, macOS, Android and Linux. iOS is handled by CA002.
 - Report-only first, then enforced.
 
@@ -110,12 +111,12 @@ Firefox on macOS never presents a device identity, so a Firefox test proves noth
 
 ### Next: Platform SSO on a replacement Mac (planned)
 
-A replacement MacBook arrives in late October and takes over as my git machine. Nothing below is built yet. The design:
+A replacement MacBook takes over as my git machine once it arrives. The tenant side was proved first on the Mac mini ([pilot](#platform-sso-pilot-on-the-mac-mini)). The design:
 
 - Corporate ownership from a serial registered before first power-on, then Company Portal enrolment. No ADE, for the reason in [decisions](decisions.md#the-replacement-mac-is-enrolled-without-apple-business).
-- Platform SSO through a settings catalog policy, Secure Enclave method, on its own group. That group is excluded from the Mac mini's Device features SSO profile, to avoid Microsoft's error 10002 for more than one SSO extension payload.
+- Platform SSO through a settings catalog policy, Secure Enclave method, assigned to a user group. My first design put it on a device group excluded from the Mac mini's Device features SSO profile. Microsoft supports Platform SSO on user assignments only, so I changed it before building. The old profile is now unassigned, so each Mac carries one SSO payload and avoids error 10002.
 - FileVault with the recovery key escrowed to Intune from day one, which the Mac mini never had.
-- A local admin account for elevation and a standard daily user.
+- A local admin account for elevation, a standard daily user, and a separate macOS user for admin work in the portals.
 - **Prerequisite, met in October:** my daily account stops being a Global Administrator first ([separate admin account](#separate-admin-account)). A separate cloud-only admin account takes the role. Otherwise the Mac's sign-in identity would be a Global Administrator, which is the root cause of the [admin consent incident](#tenant-administration-incident-an-accidental-admin-consent).
 
 Evidence to capture: enrolment status, the Platform SSO registration, the Entra join type, one SSO extension profile and no 10002, the escrowed key, compliance, Defender health, and a Conditional Access sign-in showing the device as compliant and managed.
@@ -290,7 +291,7 @@ The lesson: consent and token issuance are separate steps. Conditional Access co
 
 ## Separate admin account
 
-Administration now runs from a cloud-only, unlicensed admin account with its own MFA, used from a separate browser profile on the managed Mac mini. My daily account holds no admin role. It was also a prerequisite for the replacement Mac, whose Platform SSO registration uses the daily account.
+Administration now runs from a cloud-only admin account with its own MFA, used from its own macOS user on the managed Mac mini. It started as a separate browser profile in my daily macOS user. That stopped working when the Mac mini moved to Platform SSO the same day ([pilot](#platform-sso-pilot-on-the-mac-mini)). My daily account holds no admin role. It was also a prerequisite for the replacement Mac, whose Platform SSO registration uses the daily account.
 
 Order of work: create the account and prove it in every admin portal, move what depended on the old admin, check the break-glass accounts, then remove the roles. Removing roles first would have left nobody to fix a mistake.
 
@@ -302,10 +303,46 @@ Order of work: create the account and prove it in every admin portal, move what 
 
 Findings:
 
-- **The SSO extension lends the managed Mac's identity to a second account.** The Mac was registered by my daily account, yet the admin account's sign-ins from the same macOS user carried the Mac's device ID as compliant and managed. So the admin account passes the compliant-device policy from that Mac, and would fail it from an unmanaged one.
+- **The SSO extension lent the managed Mac's identity to a second account.** The Mac was registered by my daily account, yet the admin account's sign-ins from the same macOS user carried the Mac's device ID as compliant and managed. **This holds for the older Device features SSO extension only.** Under Platform SSO, the second account got no device identity and was refused.
 - **The Microsoft 365 admin portal is outside the compliant-device policy, but the Office 365 token it requests is inside.** The sign-in log showed the policy not applied to the portal resource and applied, and passed, to the Office 365 Portal token in the same session. That also corrects my reading of an earlier Firefox block: it came from the Office 365 resource, not the portal app.
-- **Why that matters.** Entra, Intune, Defender and Purview sit outside Office 365, so a device falling out of compliance cannot lock the admin out of the tools that fix it. That was the design reason for targeting Office 365 rather than all resources. Now I have sign-in evidence for it.
+- **Corrected the same day.** I first wrote here that Entra, Intune, Defender and Purview sit outside Office 365, so a non-compliant device could not lock the admin out of the tools that fix it. That was wrong. Later the Entra admin centre was refused under the same policy, because admin portals request tokens for Office 365 services. The break-glass accounts are the recovery path.
 - **Two records were wrong.** Graph Explorer's grant, recorded as consent for my account only, was admin consent for the whole organisation. I deleted its enterprise application. And my daily account held Security Administrator as well as Global Administrator, which I had never written down. Both roles came off.
 - **What moved.** The admin consent reviewer moved to the admin account. The eDiscovery role group is now empty, to be filled only when a search is needed. DLP notices stay on the daily account, because the admin account has no mailbox.
 
 Not done yet: a passkey on the admin account, since I have not checked whether the authentication methods policy allows one.
+
+## Platform SSO pilot on the Mac mini
+
+Goal: prove Platform SSO with the Secure Enclave method on the managed Mac mini before the replacement MacBook arrives, and keep the admin account usable from a compliant device. The Mac mini was treated as resettable.
+
+**Design change before building.** The plan waited on an empty device group for the new Mac. Microsoft's documentation says Platform SSO is assigned to user groups on devices with user affinity, not to device groups or filters. So I assigned a user group and piloted on the Mac mini instead. The older Device features SSO profile was unassigned, not deleted, so the Mac carries one SSO payload and the old profile stays as the rollback.
+
+**Registration.** The Registration Required prompt appeared after a Company Portal sync. One local password entry later, `app-sso platform -s` showed registration complete with a Secure Enclave user key and shared device keys.
+
+| Check | Result |
+|---|---|
+| Entra join type | Registered before, **Microsoft Entra joined** after, with a new device object replacing the old one |
+| Intune | Compliant, corporate, supervised, every profile and compliance policy succeeded, bootstrap token escrowed |
+| Daily account under the compliant-device policy | Passed with the new device identity |
+| Admin account, browser profile in the daily macOS user | **Refused, 530003, no device identity**, in the Microsoft 365 and Entra admin centres |
+| Admin account in its own macOS user, registered at login | Passed, device joined, compliant and managed, token bound. The Microsoft 365, Entra and Intune admin centres all opened |
+| Messaging relay on the Mac mini | Unaffected |
+
+**The fix for the admin account.** Excluding it from the compliant-device policy would have put the most privileged account under the weakest rule, so I rejected that. Instead I gave it its own macOS user and added it to the Platform SSO user group. The Platform SSO prompt registered that user within four minutes of its first login.
+
+Two things I tried there failed, and both taught me something:
+
+- Company Portal refused the admin account as not licensed for Intune. I assigned it Intune Plan 1 and Entra ID P1. Whether Platform SSO itself needed the Intune licence is not established, because I did not record when the licence landed.
+- Signing in to the Company Portal app as that user started device enrolment, which failed because the Mac is already enrolled. In a second macOS user, the Platform SSO prompt does the registration. Company Portal sign-in is the enrolment path.
+
+**Side effects, all transient.** Apps holding tokens for the old device object failed until they signed in again. Company Portal read "not registered" and timed out in its own Register flow. Intune showed the wrong Entra link until its next check-in, then relinked. Company Portal later read In compliance with no action from me. One near-miss: the Intune device ID was mistaken for a second Entra object, and deleting it was proposed. It was caught before anything was deleted. Intune's device page shows two IDs, and only the one labelled Microsoft Entra device ID matches an Entra object.
+
+**Findings.**
+
+- One Platform SSO device identity serves two macOS users, each registered as a different Entra account, and both pass the compliant-device policy.
+- Under Platform SSO, a second Entra account inside the same macOS user gets no device identity. The admin model on a Platform SSO Mac is one macOS user per Entra account. Under the older SSO extension the second account did carry the identity, so a working setup can break when a Mac moves over.
+- An Office 365 compliant-device policy reaches the admin portals through their token requests, which corrects my earlier rationale for the policy's scope.
+- Export interactive and non-interactive sign-ins together. The portal sign-ins evaluated under Conditional Access were in the interactive export. The non-interactive one alone showed only background calls where the policy did not apply.
+- Intune's device page shows the macOS Activation Lock bypass code. I crop it from every screenshot.
+
+**Not done yet.** The FileVault escrow policy. Reading back the admin macOS user's account type, which should be Standard. Narrowing the admin account's roles from Global Administrator to the roles it actually uses, with Global Administrator kept on the break-glass accounts.

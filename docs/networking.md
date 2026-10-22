@@ -217,7 +217,7 @@ Tailscale connects owned devices, infrastructure and a few untrusted VMs. The po
 | `autogroup:member` | My personal devices, untagged |
 | `tag:infra` | Proxmox host, NAS, llm01, monitoring and task containers |
 | `tag:untrusted` | work01 and edit01, the VMs where I browse and install desktop software |
-| `tag:exit-node` | Three self-hosted exit nodes on European VPS providers |
+| `tag:exit-node` | Four self-hosted exit nodes on European VPS providers, one in Norway for a Norwegian IP |
 
 ### Grants
 
@@ -230,6 +230,7 @@ Tailscale connects owned devices, infrastructure and a few untrusted VMs. The po
 | 5 | NAS | members | Syncthing | NAS starts sync to my devices |
 | 6 | work01 | Mac mini | one TCP port | One desktop app to one relay service, scoped to two named hosts |
 | 7 | work01 | NAS | Syncthing | Vault sync from the work desktop |
+| 8 | members | `tag:exit-node` | TCP 22 | Tailscale SSH to the exit nodes, and nothing else on them |
 
 Design points:
 
@@ -243,11 +244,11 @@ Design points:
 Known weaknesses, recorded rather than hidden:
 
 - The auto-approver for the home subnet route approves it for any `tag:infra` node, not only the NAS. It matters only after an infra node is compromised. The fix is a dedicated tag for the subnet router.
-- An SSH rule to the exit nodes has no matching network grant, so it is probably inert. To be tested and either fixed or deleted.
 
 Two Tailscale behaviours that cost me time:
 
 - `tailscale ping` bypasses ACL grants. It proves the path exists, not that an application can connect.
+- A Tailscale `ssh` rule does nothing without a network grant to the same destination. My rule to the exit nodes sat inert until grant 8 ([case study 23](case-studies.md#23-an-exit-node-bought-for-its-ip-and-an-ssh-rule-that-did-nothing)).
 - A guest firewall allowing a port does not make it reachable over the tailnet. The ACL is a separate default-deny layer. When a service is listening and the guest firewall is open but a tailnet client times out, check the grant first.
 
 ## DNS
