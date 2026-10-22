@@ -23,12 +23,13 @@ Every lab follows the same pattern: record the state as found, change one thing,
 | Web content filtering, Edge and Firefox | Complete |
 | RHEL 10 enrolment, custom compliance, Conditional Access | Complete, VM since deleted |
 | Remediations | Complete |
+| Separate admin account, daily account with no admin roles | Complete |
 | Purview: sensitivity label, DLP, retention, eDiscovery | Complete except retention label, which is still propagating |
 
 ## Tenant baseline
 
 - Found and revoked a stale OAuth grant that let a NAS app send mail as the Global Administrator. Replaced it with a sign-in-blocked shared mailbox.
-- Created two break-glass Global Administrator accounts on the `onmicrosoft.com` domain, excluded from every Conditional Access policy.
+- Created two break-glass Global Administrator accounts, excluded from every Conditional Access policy. My notes had both on the `onmicrosoft.com` domain. In October I found one was on the custom domain, so a domain problem could have taken out both, and renamed it.
 - Changed "Mark devices with no compliance policy assigned as" from Compliant to **Not compliant**. Before the change, an enrolled Mac with no policy showed a green Compliant and would have passed a require-compliant gate on nothing.
 - Set Android device administrator enrolment to Block. It is a deprecated mode.
 
@@ -115,7 +116,7 @@ A replacement MacBook arrives in late October and takes over as my git machine. 
 - Platform SSO through a settings catalog policy, Secure Enclave method, on its own group. That group is excluded from the Mac mini's Device features SSO profile, to avoid Microsoft's error 10002 for more than one SSO extension payload.
 - FileVault with the recovery key escrowed to Intune from day one, which the Mac mini never had.
 - A local admin account for elevation and a standard daily user.
-- **Prerequisite:** my daily account stops being a Global Administrator first. A separate cloud-only admin account takes the role. Otherwise the Mac's sign-in identity would be a Global Administrator, which is the root cause of the [admin consent incident](#tenant-administration-incident-an-accidental-admin-consent).
+- **Prerequisite, met in October:** my daily account stops being a Global Administrator first ([separate admin account](#separate-admin-account)). A separate cloud-only admin account takes the role. Otherwise the Mac's sign-in identity would be a Global Administrator, which is the root cause of the [admin consent incident](#tenant-administration-incident-an-accidental-admin-consent).
 
 Evidence to capture: enrolment status, the Platform SSO registration, the Entra join type, one SSO extension profile and no 10002, the escrowed key, compliance, Defender health, and a Conditional Access sign-in showing the device as compliant and managed.
 
@@ -285,4 +286,26 @@ A password manager filled my Global Administrator account into a third-party app
 - The sign-in log showed the token request failed Conditional Access, because the device was not compliant. The app never used the grant.
 - I deleted the enterprise application, which removed the grant, then set user consent to **Do not allow** and turned on admin consent requests.
 
-The lesson: consent and token issuance are separate steps. Conditional Access contained the damage, but it cannot stop the consent. The real control is not signing in day to day with a Global Administrator account. Moving administration to a dedicated admin account is on the [roadmap](roadmap.md).
+The lesson: consent and token issuance are separate steps. Conditional Access contained the damage, but it cannot stop the consent. The real control is not signing in day to day with a Global Administrator account, which I have since put in place: [separate admin account](#separate-admin-account).
+
+## Separate admin account
+
+Administration now runs from a cloud-only, unlicensed admin account with its own MFA, used from a separate browser profile on the managed Mac mini. My daily account holds no admin role. It was also a prerequisite for the replacement Mac, whose Platform SSO registration uses the daily account.
+
+Order of work: create the account and prove it in every admin portal, move what depended on the old admin, check the break-glass accounts, then remove the roles. Removing roles first would have left nobody to fix a mistake.
+
+| Check | Result |
+|---|---|
+| Admin account in Entra, Intune, Defender, Purview and the Microsoft 365 admin centre | All open |
+| Both break-glass accounts, from a private window with no device identity | Both sign in, and every Conditional Access policy excludes them |
+| Daily account after the roles came off | Admin centre refused, Intune shows no admin access, Outlook still works |
+
+Findings:
+
+- **The SSO extension lends the managed Mac's identity to a second account.** The Mac was registered by my daily account, yet the admin account's sign-ins from the same macOS user carried the Mac's device ID as compliant and managed. So the admin account passes the compliant-device policy from that Mac, and would fail it from an unmanaged one.
+- **The Microsoft 365 admin portal is outside the compliant-device policy, but the Office 365 token it requests is inside.** The sign-in log showed the policy not applied to the portal resource and applied, and passed, to the Office 365 Portal token in the same session. That also corrects my reading of an earlier Firefox block: it came from the Office 365 resource, not the portal app.
+- **Why that matters.** Entra, Intune, Defender and Purview sit outside Office 365, so a device falling out of compliance cannot lock the admin out of the tools that fix it. That was the design reason for targeting Office 365 rather than all resources. Now I have sign-in evidence for it.
+- **Two records were wrong.** Graph Explorer's grant, recorded as consent for my account only, was admin consent for the whole organisation. I deleted its enterprise application. And my daily account held Security Administrator as well as Global Administrator, which I had never written down. Both roles came off.
+- **What moved.** The admin consent reviewer moved to the admin account. The eDiscovery role group is now empty, to be filled only when a search is needed. DLP notices stay on the daily account, because the admin account has no mailbox.
+
+Not done yet: a passkey on the admin account, since I have not checked whether the authentication methods policy allows one.

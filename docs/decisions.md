@@ -157,3 +157,7 @@ The Hotspot zone's built-in rules already block every private range and allow DN
 ## Docker stays in guests, never on the hypervisor
 
 An unrecorded Docker Engine on the Proxmox host set the FORWARD policy to DROP, one sysctl away from cutting off every bridged guest. Containers run inside LXCs or VMs. Before any host upgrade, I compare the host's package sources with my notes. [Case study 22](case-studies.md#22-a-docker-engine-on-the-hypervisor-that-nobody-recorded).
+
+## Administration from a separate cloud-only account
+
+Business Premium has no Privileged Identity Management, so a separate account is the practical control. The admin account is cloud-only, unlicensed and used only from its own browser profile. My daily account holds no admin role, so an accidental sign-in or consent prompt cannot become an organisation-wide decision again.

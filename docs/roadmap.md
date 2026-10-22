@@ -1,6 +1,6 @@
 # Roadmap
 
-Open faults, known gaps and next work, as of 20 October 2026. Listed in priority order within each group.
+Open faults, known gaps and next work, as of 22 October 2026. Listed in priority order within each group.
 
 ## Done since the last snapshot (12 October)
 
@@ -8,6 +8,7 @@ Open faults, known gaps and next work, as of 20 October 2026. Listed in priority
 - Zone-based firewall with a Lab zone and five policies, and the lab VM moved onto the Lab VLAN with every allow and deny path proved. [Networking](networking.md#zone-based-firewall-and-the-lab-vlan).
 - The gateway's mDNS proxy turned off after a capture showed it reflecting the estate into the lab. [Case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
 - IoT zone for the speaker pair, with app control on one port and the mDNS proxy scoped to two networks and one service. [Networking](networking.md#iot-zone-for-the-speaker-pair).
+- Separate cloud-only admin account in place, admin roles removed from my daily account, break-glass accounts rechecked. [M365 labs](m365-endpoint-labs.md#separate-admin-account).
 - RTX 5070 Ti link investigation closed after nine clean cold boots at Gen4, then the firmware's primary display moved to the integrated GPU. [Case study 1](case-studies.md#1-a-gpu-that-fell-off-the-bus-gen5-over-a-gen4-cable).
 - edit01's boot fault fixed and its checks on the Untrusted network finished. [Case study 21](case-studies.md#21-a-video-editing-vm-that-booted-to-a-cursor).
 - Host and llm01 upgraded, an unrecorded Docker Engine removed from the host first. [Case study 22](case-studies.md#22-a-docker-engine-on-the-hypervisor-that-nobody-recorded).
@@ -52,7 +53,7 @@ Open faults, known gaps and next work, as of 20 October 2026. Listed in priority
 
 ## Security hardening
 
-- **Before late October:** move tenant administration to a dedicated cloud-only admin account, then remove Global Administrator from my daily account. Now a prerequisite for the replacement Mac.
+- A passkey for the admin account, once the authentication methods policy is checked.
 - Windows LAPS through Intune for the lab device, which currently has no local admin route by design.
 - DMARC from `p=none` to quarantine, after fixing Proxmox's unaligned notification mail.
 - A dedicated least-privilege NAS account for the work desktop's file share mount.

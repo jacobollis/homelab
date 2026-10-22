@@ -195,3 +195,12 @@ Operating principles from running this estate. Each one cost me time before I wr
 - **Time a drift test from the last logged run, not the clock.** The hourly schedule slides later.
 - **Prove a licence change from `licenseAssignmentStates`, not the admin centre panel.** The panel can show a change that never landed.
 - **Make the change that grants before removing the one that conflicts.** Prove it, then remove.
+
+## Separate admin account
+
+- **Prove the new admin account in every portal before removing roles from the old one.** The other order leaves nobody to fix a mistake.
+- **Read a consent grant's type on the app's Permissions blade.** A grant recorded as one user's consent was admin consent for the organisation.
+- **List a user's assigned roles before removing the one you know about.** An unrecorded Security Administrator role was still there.
+- **Check which domain each break-glass account is on.** One was on the custom domain, contrary to my notes.
+- **Test break-glass access from a private window.** It presents no device identity, which is the case the exclusion exists for.
+- **Read the sign-in log per resource.** One portal session produced one resource outside the policy and another inside it.
