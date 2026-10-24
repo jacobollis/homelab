@@ -10,7 +10,7 @@ Snapshot: 15 October 2026.
 
 | Area | Evidence | Read |
 |---|---|---|
-| Endpoint management | Windows Autopilot (user-driven, Entra joined), compliance policies on Windows, macOS, Android and RHEL 10, silent BitLocker, Win32 app packaging with supersedence, update rings, Remediations with scheduled drift correction proved, Platform SSO with the Secure Enclave method | [M365 and Intune labs](docs/m365-endpoint-labs.md) |
+| Endpoint management | Windows Autopilot (user-driven, Entra joined), compliance policies on Windows, macOS, Android and RHEL 10, silent BitLocker, Win32 app packaging with supersedence, update rings, Remediations with scheduled drift correction proved, Platform SSO with the Secure Enclave method, FileVault escrow | [M365 and Intune labs](docs/m365-endpoint-labs.md) |
 | Identity and access | Conditional Access requiring a compliant device or app protection, break-glass accounts, consent settings hardened after an accidental admin consent | [M365 and Intune labs](docs/m365-endpoint-labs.md) |
 | Endpoint security | Defender for Endpoint onboarded on Windows, macOS and Android, network protection in block mode, web content filtering in Edge and Firefox | [M365 and Intune labs](docs/m365-endpoint-labs.md) |
 | Data protection | Sensitivity label with encryption, DLP blocking external email, retention, eDiscovery content search | [M365 and Intune labs](docs/m365-endpoint-labs.md) |
@@ -18,7 +18,7 @@ Snapshot: 15 October 2026.
 | Virtualisation | Proxmox VE 9.2, VFIO passthrough of two GPUs and a whole USB4 controller, a hookscript that keeps two VMs off one GPU | [Architecture](docs/architecture.md) |
 | Remote access | Tailscale with a four-zone least-privilege ACL, subnet router, self-hosted exit nodes, tailnet-wide DNS filtering | [Networking](docs/networking.md) |
 | Monitoring and resilience | Prometheus, Alertmanager and blackbox_exporter on an independent drive, drive-fault and GPU-absent alerts, certificate expiry and probe-failure alerts, UPS shutdown with NUT, dead-man's switch, offsite backup | [Monitoring and backups](docs/monitoring-and-backups.md) |
-| Troubleshooting | Twenty-three written-up faults and changes, each with the evidence that settled it | [Case studies](docs/case-studies.md) |
+| Troubleshooting | Twenty-five written-up faults and changes, each with the evidence that settled it | [Case studies](docs/case-studies.md) |
 
 ## Scope, stated plainly
 

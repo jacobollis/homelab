@@ -46,9 +46,9 @@ n8n, a regression watcher, a container-image update watcher and an Uptime Kuma i
 
 The Autopilot lab VM has no scheduled backup. Its value lives in the Intune and Entra objects and the captured evidence. Rollback uses per-lab snapshots. Teardown order matters: delete the Intune record, deregister from Autopilot, then remove the Entra object, then destroy the VM. Deleting the VM alone leaves a registration keyed to a serial that no longer exists.
 
-## One Mac stays unenrolled
+## One Mac stayed unenrolled
 
-The MacBook is deliberately unmanaged. It is the negative case for the require-compliant-device policy. With every device compliant, there is no way to show the policy blocking anything.
+The old MacBook was deliberately unmanaged. It was the negative case for the require-compliant-device policy. With every device compliant, there is no way to show the policy blocking anything. That evidence is captured. Its replacement is enrolled, and the work desktop, an unmanaged Linux machine inside the policy's platform scope, now shows the block on demand.
 
 ## The iPhone gets app protection, not enrolment
 
@@ -171,3 +171,15 @@ Under Platform SSO, a second Entra account in the same macOS user signs in as an
 ## A Norwegian exit node, bought for its IP
 
 An exit node is where traffic leaves the tailnet, so a distant one adds a detour for anything near home. The reason to have one in Norway is a Norwegian IP, for geo-restricted Norwegian TV used for language study. It replaces the Finnish exit node rather than adding a fourth for good. I bought it from the datacentre operator, not from a country-named reseller of the same servers, because an exit node's value depends on the provider's IP reputation. [Case study 23](case-studies.md#23-an-exit-node-bought-for-its-ip-and-an-ssh-rule-that-did-nothing).
+
+## Device join rights go to a named group
+
+Entra's "Users may join devices" setting holds one group with the daily and admin accounts. Not All, because All includes the break-glass accounts, and nothing should join devices as them. Not the admin account alone, because Platform SSO joins a Mac in the daily user's name. [Case study 24](case-studies.md#24-a-platform-sso-join-refused-by-a-setting-i-changed-the-day-before).
+
+## FileVault is enabled by policy, not in Setup Assistant
+
+On a Mac Intune will manage, I decline FileVault at setup and let the policy enable it at the first logout. The key then goes to Intune and is never shown. A Mac encrypted at setup needs its key rotated before Intune holds one.
+
+## The git repo moved to the new Mac as a whole folder
+
+The clone moved as a hashed archive, so `.git`, the local tag holding the replaced June history, the hook setup and the private denylist all came with it. Hashes matched on both Macs. On the new Mac the gates were rerun before any commit: the sanitise check, a gitleaks scan of the full history, and a hook test with a staged fake key, which the private-key hook blocked.

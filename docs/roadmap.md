@@ -1,6 +1,6 @@
 # Roadmap
 
-Open faults, known gaps and next work, as of 22 October 2026. Listed in priority order within each group.
+Open faults, known gaps and next work, as of 24 October 2026. Listed in priority order within each group.
 
 ## Done since the last snapshot (12 October)
 
@@ -8,6 +8,9 @@ Open faults, known gaps and next work, as of 22 October 2026. Listed in priority
 - Zone-based firewall with a Lab zone and five policies, and the lab VM moved onto the Lab VLAN with every allow and deny path proved. [Networking](networking.md#zone-based-firewall-and-the-lab-vlan).
 - The gateway's mDNS proxy turned off after a capture showed it reflecting the estate into the lab. [Case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
 - IoT zone for the speaker pair, with app control on one port and the mDNS proxy scoped to two networks and one service. [Networking](networking.md#iot-zone-for-the-speaker-pair).
+- Replacement Mac built as a corporate Intune Mac with Platform SSO and FileVault escrow, and the git repo moved onto it with every gate rerun. [M365 labs](m365-endpoint-labs.md#corporate-build-of-the-replacement-mac).
+- FileVault escrow policy in place, the Mac mini's key rotated into Intune. [M365 labs](m365-endpoint-labs.md#filevault-escrow).
+- An API key that leaked through vault sync contained and rotated. [Case study 25](case-studies.md#25-an-api-key-that-synced-to-every-device).
 - Platform SSO with the Secure Enclave method piloted on the Mac mini, with admin work moved to its own macOS user. [M365 labs](m365-endpoint-labs.md#platform-sso-pilot-on-the-mac-mini).
 - A Norwegian exit node built and hardened, and the inert SSH rule to the exit nodes fixed with one narrow grant. [Case study 23](case-studies.md#23-an-exit-node-bought-for-its-ip-and-an-ssh-rule-that-did-nothing).
 - Separate cloud-only admin account in place, admin roles removed from my daily account, break-glass accounts rechecked. [M365 labs](m365-endpoint-labs.md#separate-admin-account).
@@ -62,11 +65,12 @@ Open faults, known gaps and next work, as of 22 October 2026. Listed in priority
 - A NAS-only DNS token for its certificate renewals. The Proxmox host already has its own.
 - A dedicated Tailscale tag for the subnet router, so route auto-approval applies to it alone.
 - Retire the Finnish exit node once the Norwegian one has run a week, and update Tailscale on the other exit nodes and the NAS.
-- Narrow the admin account's roles to those it uses, with Global Administrator kept on the break-glass accounts.
+- Decide the admin account's roles: keep Global Administrator as a recorded decision, or narrow it, with Global Administrator kept on the break-glass accounts. A passkey and an authentication strength for admin roles either way.
 
 ## Lab work
 
-- Replacement Mac: corporate enrolment through Company Portal, Platform SSO with the Secure Enclave method, a separate macOS user for admin work, FileVault escrow. [Plan](m365-endpoint-labs.md#next-platform-sso-on-a-replacement-mac-planned).
+- Retire the old Mac: revoke its SSH keys on every host first, then erase it and trade it in.
+- Give the work desktop its own Khoj key, with the plugin's settings file ignored by Syncthing first.
 - Restore the Windows Business plan on my account. The admin centre shows it saved, but the user's licence record has not changed since before the save.
 - Retention label: apply it once it propagates.
 - Sensitivity label: open the protected file in Word desktop as an outside identity to evidence the refusal.

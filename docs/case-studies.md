@@ -328,3 +328,34 @@ The cause was the gateway's mDNS proxy, set to Auto. On Auto it reflects every n
 **Lessons.** Pick an exit node's location for the IP it gives you. Test the purpose against the service itself before building out. A Tailscale `ssh` rule needs a network grant to the same destination. Close public SSH at the provider, and keep a console route in.
 
 **Still to do.** Retire the Finnish exit node after a week of running the new one, and update the Tailscale clients on the older exit nodes.
+
+## 24. A Platform SSO join refused by a setting I changed the day before
+
+**Symptom.** The replacement Mac enrolled in Intune, then Platform SSO registration failed with "Registration failed and will automatically retry in a few minutes". The Mac mini had registered the same way the day before.
+
+**What settled it.** The Mac's dialog gave no reason, so I went to the Entra audit log and filtered on the Device Registration Service. One failed Register device entry, for my daily account: "Administrator policy does not allow user ... to device join". That pointed at Entra's Device settings, where "Users may join devices to Microsoft Entra" read Selected, with only the admin account in it.
+
+**Cause.** I had narrowed that setting during the admin account split the day before and not recorded it. My notes still said All. The Mac mini's registrations ran before the change, so the pilot never hit it. Platform SSO joins the Mac in the signed-in user's name, so the daily account needs join rights.
+
+**Change.** A group holding the daily and admin accounts, set as the only entry in that setting. Not All, because All includes the break-glass accounts, which every Conditional Access policy excludes, and nothing should be joining devices as them. Not the Platform SSO user group either, so SSO targeting and join authority stay separate. The retry then joined the Mac.
+
+**Lessons.** When a Platform SSO registration fails, read the Device Registration Service audit log before guessing. Record every tenant setting changed along the way, including ones changed in passing. This one surfaced a day later on a different machine.
+
+## 25. An API key that synced to every device
+
+**Context.** My Obsidian vault syncs through Syncthing, with the NAS as the hub. The vault's Khoj plugin connects to my self-hosted Khoj instance with an API key. The new Mac needed its own key.
+
+**The wrong conclusion.** The old Mac connected to Khoj with an empty key field in the plugin's settings file. I read that as "the plugin keeps the key per device" and did not test it. I created a key for the new Mac and entered it. The plugin wrote the key into its settings file inside the vault, and Syncthing carried it to every vault device, the NAS, and from the NAS towards the offsite backup. I found it by checking the file afterwards, with a count and a length, never the value.
+
+**Containment, then rotation.** Rotating first would only have spread the new key the same way. So the order was:
+
+1. An ignore pattern for that one file on the NAS hub, then on both Macs. Syncthing does not sync ignore files between devices, so each device needs its own.
+2. Rescan everywhere and confirm Up to Date, with "Reduced by ignore patterns".
+3. Delete the key on the Khoj server and create a new one under the same name, in one step.
+4. Enter the new key on the new Mac only, then prove it stayed there. The settings file hashed differently on the two Macs, and the old Mac's copy held the revoked key.
+
+The leaked key still sits in each old copy of the file and in backups. Ignored files are left on disk, not deleted, and backups are not rewritten. It is revoked, so every copy is dead. The key never went into a chat.
+
+**Also found.** Eleven Syncthing conflict copies of plugin settings files, which sync to every device like any other file. I diffed each against the current file before deleting it: the plugin lists matched, and one minor setting had been lost.
+
+**Lessons.** Prove where an app stores a secret before entering one on a synced device. Plugin settings in a synced vault are shared state, so exclude per-device files before the first device writes them. Contain first, then rotate.

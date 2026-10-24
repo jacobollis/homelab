@@ -225,3 +225,27 @@ Operating principles from running this estate. Each one cost me time before I wr
 - **Close public SSH at the provider's firewall,** and keep the provider's console as the way back in.
 - **Check that `unattended-upgrades` is actually switched on** by reading the APT setting back.
 - **A port that times out while the provider panel reads "installing" is not yet a fault.** Wait, and run a positive control on the same port elsewhere.
+
+## The replacement Mac
+
+- **Narrowing who may join devices to Entra can break Platform SSO for the daily account.** Scope joins to a named group.
+- **Read the Device Registration Service audit log when Platform SSO fails.** The Mac's dialog gives no reason.
+- **Add a Platform SSO Mac to a device group only after it has joined.** Registration replaces the device object.
+- **The Intune policy summary lists only configured settings.** Read it against the list you intended before assigning.
+- **Decline FileVault in Setup Assistant on a Mac Intune will manage.** On an already encrypted Mac, rotate the key so Intune holds it.
+- **Check a new Mac's OS version against the compliance minimum before enrolling.**
+- **Inventory local-only data before replacing a machine,** by checking what each sync tool covers.
+- **Prove a pre-commit hook with a file name the repo tracks.** A gitignored test file is never staged, so no hook runs and it looks like a pass.
+- **Guard every append to an `authorized_keys` file.** Test the source exists, back up the target, and check the line count after.
+- **Write config files with `printf` one-liners, not heredocs pasted from a chat.** An indented closing marker is never seen.
+- **Include the prompt line when pasting output from a machine with a twin.**
+
+## Synced vaults and secrets
+
+- **Prove where an app stores a secret before entering it on a synced device.** Test with a dummy value and grep for its length, never the value.
+- **Plugin settings in a synced Obsidian vault are shared state.**
+- **Set Syncthing ignore patterns before the app that writes into the folder first runs.** Ignore files do not sync between devices.
+- **In a hub-and-spoke setup, add the ignore pattern on the hub and every spoke.**
+- **Contain first, then rotate.** Rotating while the file still syncs spreads the new key too.
+- **Syncthing conflict copies sync like any other file.** Diff each before deleting it.
+- **Check a vault for executables before a new device pulls it.**

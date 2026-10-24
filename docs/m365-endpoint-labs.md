@@ -15,7 +15,8 @@ Every lab follows the same pattern: record the state as found, change one thing,
 | Conditional Access, require compliant device | Complete, enforced |
 | macOS enrolment, compliance, SSO extension, Defender | Complete |
 | Platform SSO with the Secure Enclave method, piloted on the Mac mini | Complete |
-| macOS corporate enrolment with Platform SSO on a second Mac | Planned, once the Mac arrives |
+| macOS corporate enrolment with Platform SSO on a second Mac | Complete |
+| FileVault with the recovery key escrowed to Intune, both Macs | Complete |
 | Android Enterprise fully managed, compliance, Defender | Complete |
 | iPhone app protection without enrolment | Complete, enforced |
 | Windows compliance and BitLocker | Complete |
@@ -109,17 +110,17 @@ Device-based Conditional Access on macOS needs the Microsoft Enterprise SSO plug
 
 Firefox on macOS never presents a device identity, so a Firefox test proves nothing about the device. Microsoft's block page suggests Safari by name, which is the clue.
 
-### Next: Platform SSO on a replacement Mac (planned)
+### Platform SSO on a replacement Mac: the design
 
-A replacement MacBook takes over as my git machine once it arrives. The tenant side was proved first on the Mac mini ([pilot](#platform-sso-pilot-on-the-mac-mini)). The design:
+A replacement MacBook took over as my git machine. The tenant side was proved first on the Mac mini ([pilot](#platform-sso-pilot-on-the-mac-mini)), then the Mac was built to this design ([build](#corporate-build-of-the-replacement-mac)). The design:
 
 - Corporate ownership from a serial registered before first power-on, then Company Portal enrolment. No ADE, for the reason in [decisions](decisions.md#the-replacement-mac-is-enrolled-without-apple-business).
 - Platform SSO through a settings catalog policy, Secure Enclave method, assigned to a user group. My first design put it on a device group excluded from the Mac mini's Device features SSO profile. Microsoft supports Platform SSO on user assignments only, so I changed it before building. The old profile is now unassigned, so each Mac carries one SSO payload and avoids error 10002.
-- FileVault with the recovery key escrowed to Intune from day one, which the Mac mini never had.
+- FileVault with the recovery key escrowed to Intune from day one. The Mac mini was escrowed the day before the build.
 - A local admin account for elevation, a standard daily user, and a separate macOS user for admin work in the portals.
 - **Prerequisite, met in October:** my daily account stops being a Global Administrator first ([separate admin account](#separate-admin-account)). A separate cloud-only admin account takes the role. Otherwise the Mac's sign-in identity would be a Global Administrator, which is the root cause of the [admin consent incident](#tenant-administration-incident-an-accidental-admin-consent).
 
-Evidence to capture: enrolment status, the Platform SSO registration, the Entra join type, one SSO extension profile and no 10002, the escrowed key, compliance, Defender health, and a Conditional Access sign-in showing the device as compliant and managed.
+Evidence captured: enrolment status, the Platform SSO registration, the Entra join type, one SSO extension profile and no 10002, the escrowed key, compliance, Defender health, and a Conditional Access sign-in showing the device as compliant and managed.
 
 The outgoing MacBook was the tenant's unmanaged negative case for the compliant-device policy. That evidence is already captured. Afterwards, the work desktop, an unmanaged Linux machine inside the policy's platform scope, shows the block on demand.
 
@@ -345,4 +346,45 @@ Two things I tried there failed, and both taught me something:
 - Export interactive and non-interactive sign-ins together. The portal sign-ins evaluated under Conditional Access were in the interactive export. The non-interactive one alone showed only background calls where the policy did not apply.
 - Intune's device page shows the macOS Activation Lock bypass code. I crop it from every screenshot.
 
-**Not done yet.** The FileVault escrow policy. Reading back the admin macOS user's account type, which should be Standard. Narrowing the admin account's roles from Global Administrator to the roles it actually uses, with Global Administrator kept on the break-glass accounts.
+**Done since.** The FileVault escrow policy, and the admin macOS user read back as Standard. The Entra audit log dated the admin account's Intune licence ten minutes after its Platform SSO registration, so the registration did not need it.
+
+**Not done yet.** Narrowing the admin account's roles from Global Administrator to the roles it actually uses, with Global Administrator kept on the break-glass accounts. I have not decided this yet.
+
+## FileVault escrow
+
+An Endpoint security disk encryption policy, assigned to a static device group of Macs: FileVault on, deferred to the next logout, the personal recovery key escrowed to Intune and not shown to the user.
+
+- **The first save left Show Recovery Key out.** The policy summary lists only the settings you configure, and an unset Show Recovery Key takes Apple's default, which shows the key. I caught it and set it to Disabled before any Mac acted on the policy.
+- **The Mac mini was already encrypted,** so it received only the escrow payloads and no enable payload. Intune holds a key only after the key changes, so I rotated it with `fdesetup changerecovery -personal` as the local admin. The new key went straight into my password manager, never into a chat, and matched what Intune showed.
+- **The replacement Mac** had FileVault declined in Setup Assistant, so the policy enabled it. It came on at the first logout, the key went to Intune, and nothing was shown on screen.
+- The policy's status report still read Pending for the Mac mini after its key was escrowed. I have not found out why.
+
+## Corporate build of the replacement Mac
+
+A 16-inch MacBook Pro, built to the [design above](#platform-sso-on-a-replacement-mac-the-design) as a corporate Intune Mac without Apple Business.
+
+**Before first power-on.** Its serial went in as a corporate device identifier while the lid was still shut.
+
+**Setup.** A local admin account first, no Migration Assistant, FileVault declined. The Mac shipped on macOS 26.6, below my compliance policy's 27.0 minimum, so I upgraded it before enrolling to keep an OS failure out of the evidence. Then a Standard daily user, and Company Portal enrolment: Corporate, Supervised, user approved.
+
+**Platform SSO was refused, by a setting I had changed the day before.** See [case study 24](case-studies.md#24-a-platform-sso-join-refused-by-a-setting-i-changed-the-day-before). After the fix the Mac joined Entra on retry.
+
+**FileVault.** I added the Mac to the FileVault device group after the join, because registration replaces the device's Entra object and group membership belongs to the object.
+
+| Check | Result |
+|---|---|
+| Ownership and management | Corporate, Supervised, compliant, every profile and compliance policy succeeded |
+| Entra | Microsoft Entra joined, one SSO payload |
+| FileVault | On at first logout, key escrowed, not shown |
+| Managed apps | Defender, Edge and Microsoft 365 Apps installed from existing assignments, Defender healthy |
+| Daily account, compliant-device policy | Passed in Safari and Edge with the joined, compliant device and a bound refresh token, no password prompt |
+| Admin account in its own Standard macOS user | Registered at first login, passed the policy in the Microsoft 365 admin centre, can unlock FileVault |
+
+**Findings.**
+
+- Platform SSO joins the Mac in the signed-in user's name, so the daily account needs join rights. The admin account alone is the wrong scope.
+- The Mac's own dialog said only "Registration failed". The Device Registration Service audit log named the policy.
+- A Mac bought new can ship below the tenant's minimum OS.
+- On a Mac whose daily user is Standard, Homebrew casks install to `~/Applications`, so apps stay updatable without admin rights. Casks that ship a `.pkg` still need the admin account.
+
+Not done yet: the Company Portal website's recovery key path for the new Mac.
