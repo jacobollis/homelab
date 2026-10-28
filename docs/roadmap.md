@@ -1,6 +1,6 @@
 # Roadmap
 
-Open faults, known gaps and next work, as of 24 October 2026. Listed in priority order within each group.
+Open faults, known gaps and next work, as of 28 October 2026. Listed in priority order within each group.
 
 ## Done since the last snapshot (12 October)
 
@@ -8,6 +8,9 @@ Open faults, known gaps and next work, as of 24 October 2026. Listed in priority
 - Zone-based firewall with a Lab zone and five policies, and the lab VM moved onto the Lab VLAN with every allow and deny path proved. [Networking](networking.md#zone-based-firewall-and-the-lab-vlan).
 - The gateway's mDNS proxy turned off after a capture showed it reflecting the estate into the lab. [Case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
 - IoT zone for the speaker pair, with app control on one port and the mDNS proxy scoped to two networks and one service. [Networking](networking.md#iot-zone-for-the-speaker-pair).
+- Wake-on-LAN from power-off fixed: the firmware setting was off. [Case study 27](case-studies.md#27-wake-on-lan-that-my-notes-said-was-on).
+- A server-side Microsoft 365 connector admitted through Conditional Access with a vendor-range exclusion and a compensating policy, and the admin account moved to its own all-resources device policy. [Case study 26](case-studies.md#26-a-server-side-connector-blocked-by-a-device-policy).
+- The old MacBook retired: its SSH keys revoked on GitHub, the NAS and every exit node, its sync and tailnet entries removed, Activation Lock off, erased.
 - Replacement Mac built as a corporate Intune Mac with Platform SSO and FileVault escrow, and the git repo moved onto it with every gate rerun. [M365 labs](m365-endpoint-labs.md#corporate-build-of-the-replacement-mac).
 - FileVault escrow policy in place, the Mac mini's key rotated into Intune. [M365 labs](m365-endpoint-labs.md#filevault-escrow).
 - An API key that leaked through vault sync contained and rotated. [Case study 25](case-studies.md#25-an-api-key-that-synced-to-every-device).
@@ -32,7 +35,7 @@ Open faults, known gaps and next work, as of 24 October 2026. Listed in priority
 
 ## Open faults
 
-- **Wake-on-LAN from power-off fails.** The earlier suspect, a forced link speed, turned out not to exist: the NIC autonegotiates. The remaining suspect is the NIC's link on standby power. Diagnosis planned for the next shutdown.
+- None open. Wake-on-LAN needs one more wake after a later shutdown to show it repeats.
 
 ## Gateway roadmap
 
@@ -65,11 +68,13 @@ Open faults, known gaps and next work, as of 24 October 2026. Listed in priority
 - A NAS-only DNS token for its certificate renewals. The Proxmox host already has its own.
 - A dedicated Tailscale tag for the subnet router, so route auto-approval applies to it alone.
 - Retire the Finnish exit node once the Norwegian one has run a week, and update Tailscale on the other exit nodes and the NAS.
+- Cancel the admin account's unused Intune licence once its admin centres are proved to load without it after Microsoft's 48-hour window.
+- Prove the connector policy's seven-day re-authentication, and read how the connector's consent was granted.
 - Decide the admin account's roles: keep Global Administrator as a recorded decision, or narrow it, with Global Administrator kept on the break-glass accounts. A passkey and an authentication strength for admin roles either way.
 
 ## Lab work
 
-- Retire the old Mac: revoke its SSH keys on every host first, then erase it and trade it in.
+- The Mac mini was replaced too. Capture its build evidence before writing it up, rebuild the message relay on it, and point the Untrusted direct-path policy at its address.
 - Give the work desktop its own Khoj key, with the plugin's settings file ignored by Syncthing first.
 - Restore the Windows Business plan on my account. The admin centre shows it saved, but the user's licence record has not changed since before the save.
 - Retention label: apply it once it propagates.

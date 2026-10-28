@@ -162,7 +162,7 @@ An unrecorded Docker Engine on the Proxmox host set the FORWARD policy to DROP, 
 
 ## Administration from a separate cloud-only account
 
-Business Premium has no Privileged Identity Management, so a separate account is the practical control. The admin account is cloud-only and used only from its own macOS user on a managed Mac. It holds Intune and Entra ID P1 licences but no productivity apps or mailbox. My daily account holds no admin role, so an accidental sign-in or consent prompt cannot become an organisation-wide decision again.
+Business Premium has no Privileged Identity Management, so a separate account is the practical control. The admin account is cloud-only and used only from its own macOS user on a managed Mac. It holds an Entra ID P1 licence and no productivity apps or mailbox. Since October it has its own policy requiring a compliant device on all resources, rather than sharing the daily account's Office 365 policy. My daily account holds no admin role, so an accidental sign-in or consent prompt cannot become an organisation-wide decision again.
 
 ## Admin work gets its own macOS user, not a policy exclusion
 
@@ -183,3 +183,11 @@ On a Mac Intune will manage, I decline FileVault at setup and let the policy ena
 ## The git repo moved to the new Mac as a whole folder
 
 The clone moved as a hashed archive, so `.git`, the local tag holding the replaced June history, the hook setup and the private denylist all came with it. Hashes matched on both Macs. On the new Mac the gates were rerun before any commit: the sanitise check, a gitleaks scan of the full history, and a hook test with a staged fake key, which the private-key hook blocked.
+
+## A vendor's egress range is excluded, with a compensating control
+
+A server-side connector can never present a device, so a device policy can never pass it. I excluded only the vendor's published egress range from the device policy, marked not trusted, and put a policy requiring MFA with a seven-day sign-in frequency on that range for the daily account alone. Excluding the app would have done nothing, since Conditional Access targets the resource. Excluding the user would have removed the device check everywhere. [Case study 26](case-studies.md#26-a-server-side-connector-blocked-by-a-device-policy).
+
+## The old Mac's keys were revoked before the erase
+
+Each host's `authorized_keys` was edited from the new Mac, one line at a time, by fingerprint, with a dated backup and a second login proved after each change. The exit nodes now hold no SSH keys at all, so the only way in is Tailscale SSH under the narrow grant, plus each provider's console. GitHub lists one key, the new Mac's.

@@ -249,3 +249,21 @@ Operating principles from running this estate. Each one cost me time before I wr
 - **Contain first, then rotate.** Rotating while the file still syncs spreads the new key too.
 - **Syncthing conflict copies sync like any other file.** Diff each before deleting it.
 - **Check a vault for executables before a new device pulls it.**
+
+## Conditional Access and connectors
+
+- **Conditional Access targets the resource, not the client.** Excluding a client app from a resource-scoped policy changes nothing for its sign-ins.
+- **A server-side connector can never satisfy a device grant.** Read the sign-in's device detail and user agent before designing around it.
+- **Move a privileged account to its own policy, and prove it, before carving an exclusion into the policy it shares.**
+- **Conditional Access is evaluated only when a token is issued.** An idle connector on a cached token shows nothing. Force a fresh token to prove enforcement.
+
+## Wake-on-LAN and power
+
+- **Read the firmware setting itself.** A note saying "WoL on" survived for weeks with Power On By PCI-E disabled.
+- **Capture on the wire to split sender from receiver.** A 102-byte UDP payload on port 9 is a magic packet.
+- **Check what the board does when power returns before a power-cut test.** With Restore on AC Power Loss set to Power On, cutting and restoring power boots the host and proves nothing.
+- **A test shutdown can cut catch-up backups short.** Check for locks and partial archives, then rerun.
+
+## Replacing a managed device
+
+- **User-targeted assignments follow the user to a new device. Device-group memberships do not.** Add every device-group membership by hand as a build step.

@@ -359,3 +359,46 @@ The leaked key still sits in each old copy of the file and in backups. Ignored f
 **Also found.** Eleven Syncthing conflict copies of plugin settings files, which sync to every device like any other file. I diffed each against the current file before deleting it: the plugin lists matched, and one minor setting had been lost.
 
 **Lessons.** Prove where an app stores a secret before entering one on a synced device. Plugin settings in a synced vault are shared state, so exclude per-device files before the first device writes them. Contain first, then rotate.
+
+## 26. A server-side connector blocked by a device policy
+
+**Symptom.** A Microsoft 365 connector for an AI assistant, linked to my daily account, failed every sign-in with AADSTS530003, device required to be managed.
+
+**What the sign-in log showed.** A non-interactive sign-in to Microsoft Graph with no device, OS Linux, client app Browser, and a Node.js identity library as the user agent, from the vendor's network. The connector redeems tokens on its own servers. My compliant-device policy applied, because Graph carries Office 365 audiences and Linux is in the policy's platform list, and it failed, because a server process can never present a device.
+
+**The first fix considered was wrong.** Excluding the connector's app from the policy. Conditional Access targets the resource the token is for, not the client asking for it, so that exclusion would have changed nothing. It was dropped before anything was saved.
+
+**Design.** Three constraints: the exclusion as narrow as Microsoft allows, nothing weakened for the admin account, and a control on whatever path it opens.
+
+1. Move the admin account first. A new policy requires a compliant device for the admin account on all resources. I proved it with an admin sign-in before touching the original policy.
+2. Exclude only the vendor's published egress range from the original policy, as a named location marked not trusted. Not the app, the user or the platform. The admin account is excluded from it too, now that it has its own.
+3. A compensating policy on that range only, for the daily account only: require MFA, with a seven-day sign-in frequency. Report-only first, then on.
+
+**Evidence.** Before: the connector failed under the device policy. Report-only: the connector signed in, the device policy read not applied because of the location exclusion, and the new policy read report-only success. Enforced: success, with the MFA and sign-in-frequency controls satisfied.
+
+**Proving enforcement needed a fresh token.** After switching the policy on, the next log export held no connector entry at all. That was not a pass. Conditional Access is evaluated only when a token is issued, and the connector was running on a cached one. A fresh call the next morning produced the enforced result.
+
+**Residual risk, recorded.** The excluded range is shared by every customer of that vendor. A stolen refresh token replayed from it would skip the device check. The compensating policy limits that with the MFA claim and the seven-day re-authentication. It does not stop a replay inside that window. In a client tenant this would need a written risk decision from the data owner, and a scheduled check of the vendor's published range.
+
+**Not yet shown.** The compensating policy refusing a token without an MFA claim, and the seven-day re-authentication happening in practice. How the connector's consent was granted is still to be read in the audit log.
+
+## 27. Wake-on-LAN that my notes said was on
+
+**Symptom.** The host never woke from power-off. It had been an open fault for three weeks, and the main suspect, a forced NIC link speed, had already been ruled out.
+
+**What I checked, in order.**
+
+- **Link in standby.** With the host off, the switch port and the board's port both showed link lights. So the NIC kept standby power, and the firmware's power-saving mode was not cutting it.
+- **The sender.** The wake command printed the right MAC and the current broadcast address. The host stayed off.
+- **The wire.** A packet capture on another wired Mac on the same network caught a 102-byte UDP packet to the broadcast address on port 9, from the NAS. That is a magic packet's exact payload: six bytes of FF and the MAC sixteen times. So the packet left the NAS and crossed the switch.
+- **The firmware.** The BIOS power screen read Power On By PCI-E: **Disabled**. My notes had said "WoL on" for weeks, from a source I cannot trace. Nothing pointed to a BIOS reset, since other settings made in October had survived.
+
+**Change.** Power On By PCI-E enabled and saved, with a photo before and after. After the next normal shutdown, one wake command booted the host, confirmed in the host's boot list.
+
+**A near-miss.** The first test plan cut power at the PSU switch. The same BIOS screen showed Restore on AC Power Loss set to Power On, so restoring power would have booted the host by itself and proved nothing. Caught before it ran.
+
+**Side effect.** The host's catch-up backups, which start soon after a boot that follows an overnight power-off, were cut short by the test shutdown. I checked for leftover locks and partial files on the NAS, found none, and reran both jobs clean.
+
+**Lessons.** Read the firmware setting itself before trusting a note that says it is on. Capture on the wire to split sender faults from receiver faults. Before a power-cut test, check what the board does when power returns.
+
+**Still to do.** One more wake after a later shutdown, to show it repeats.
