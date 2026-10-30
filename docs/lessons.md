@@ -267,3 +267,19 @@ Operating principles from running this estate. Each one cost me time before I wr
 ## Replacing a managed device
 
 - **User-targeted assignments follow the user to a new device. Device-group memberships do not.** Add every device-group membership by hand as a build step.
+
+## Testing controls
+
+- **A deny test only counts if the test account is subject to the control.** Check the control's exemptions before choosing the account.
+- **Assignment required does not apply to Global Administrators.** Use Conditional Access to restrict an admin account from an app.
+- **Device claims travel with the session.** Tokens a server redeems on a session started on a compliant device carry that device's claims.
+- **An expected failure that succeeds is the finding.** Contain first, then read the logs.
+- **The audit log's portal view can show nothing where the export holds the record.** Export before concluding an event is absent.
+- **A first sign-in date is not a consent date.**
+
+## Decommissioning
+
+- **Search every machine's schedulers when retiring a server.** A dead job on the NAS kept a retired mailbox's token in use.
+- **Check an object's ID before deleting it, not its name.**
+- **Check a node's live peers before retiring it.** An exit node with no active peers but your own session is safe to remove.
+- **Read a device's automatic settings.** Automatic exit-node selection was on without being chosen.

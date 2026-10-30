@@ -347,7 +347,7 @@ Two things I tried there failed, and both taught me something:
 - Export interactive and non-interactive sign-ins together. The portal sign-ins evaluated under Conditional Access were in the interactive export. The non-interactive one alone showed only background calls where the policy did not apply.
 - Intune's device page shows the macOS Activation Lock bypass code. I crop it from every screenshot.
 
-**Done since.** The FileVault escrow policy, and the admin macOS user read back as Standard. The Entra audit log dated the admin account's Intune licence ten minutes after its Platform SSO registration, so the registration did not need it.
+**Done since.** The FileVault escrow policy, and the admin macOS user read back as Standard. The Entra audit log dated the admin account's Intune licence ten minutes after its Platform SSO registration, so the registration did not need it. I then removed the licence. Four days later the Intune, Microsoft 365 and Entra admin centres all still loaded for the unlicensed admin account, past Microsoft's 48-hour window, so I cancelled the subscription.
 
 **Not done yet.** Narrowing the admin account's roles from Global Administrator to the roles it actually uses, with Global Administrator kept on the break-glass accounts. I have not decided this yet.
 

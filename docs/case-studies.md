@@ -327,7 +327,7 @@ The cause was the gateway's mDNS proxy, set to Auto. On Auto it reflects every n
 
 **Lessons.** Pick an exit node's location for the IP it gives you. Test the purpose against the service itself before building out. A Tailscale `ssh` rule needs a network grant to the same destination. Close public SSH at the provider, and keep a console route in.
 
-**Still to do.** Retire the Finnish exit node after a week of running the new one, and update the Tailscale clients on the older exit nodes.
+**Since then.** The Finnish exit node was retired a week later. Before deleting it I checked its peers: the only active one was my own SSH session, and nothing had used it for days. The policy file and DNS held no reference to it. Then the node came off the tailnet and the server was deleted. Three exit nodes remain. Tailscale on the older exit nodes still needs updating.
 
 ## 24. A Platform SSO join refused by a setting I changed the day before
 
@@ -380,7 +380,9 @@ The leaked key still sits in each old copy of the file and in backups. Ignored f
 
 **Residual risk, recorded.** The excluded range is shared by every customer of that vendor. A stolen refresh token replayed from it would skip the device check. The compensating policy limits that with the MFA claim and the seven-day re-authentication. It does not stop a replay inside that window. In a client tenant this would need a written risk decision from the data owner, and a scheduled check of the vendor's published range.
 
-**Not yet shown.** The compensating policy refusing a token without an MFA claim, and the seven-day re-authentication happening in practice. How the connector's consent was granted is still to be read in the audit log.
+**How the consent was granted.** The audit log's portal view showed nothing, so I exported it. The export held the record. My daily account had granted organisation-wide admin consent sixteen days before the connector's first sign-in, while it still held Global Administrator. It was the same pattern as the [admin consent incident](m365-endpoint-labs.md#tenant-administration-incident-an-accidental-admin-consent), and it happened before I split the admin account out. The connector registers two enterprise apps, each with its own grant. I set Assignment required on both and assigned only the daily account. That restriction turned out not to bind administrators ([case study 28](#28-a-deny-test-that-passed-the-wrong-way)).
+
+**Not yet shown.** The compensating policy refusing a token without an MFA claim, and the seven-day re-authentication happening in practice.
 
 ## 27. Wake-on-LAN that my notes said was on
 
@@ -401,4 +403,34 @@ The leaked key still sits in each old copy of the file and in backups. Ignored f
 
 **Lessons.** Read the firmware setting itself before trusting a note that says it is on. Capture on the wire to split sender faults from receiver faults. Before a power-cut test, check what the board does when power returns.
 
-**Still to do.** One more wake after a later shutdown, to show it repeats.
+**Repeated.** The second test came a day later, from my workplace over the tailnet. The host's boot list showed a normal shutdown the night before, and one wake command booted it. I waited for its catch-up backups to finish before shutting it down remotely.
+
+## 28. A deny test that passed the wrong way
+
+**Context.** The AI assistant's Microsoft 365 connector holds an organisation-wide grant ([case study 26](#26-a-server-side-connector-blocked-by-a-device-policy)). I set Assignment required on both of its enterprise apps and assigned only my daily account. To prove the restriction, I connected the connector as my admin account and expected a refusal, AADSTS50105.
+
+**It connected.** The assistant read the admin account's profile and granted scopes through Microsoft Graph.
+
+**Contain first.** Before reading anything, I disconnected the connector, revoked the admin account's sessions, and reconnected it as the daily account. A Graph call through it then returned the daily account.
+
+**Why assignment did not refuse.** Both apps listed only the daily account, and Assignment required read Yes on both. Microsoft's troubleshooting article for AADSTS50105 says it plainly: the assignment requirement does not apply to Global Administrators. The admin account is one. So are both break-glass accounts. My test used the one kind of account the control ignores, so it could never have shown the control working.
+
+**Why my admin device policy did not refuse either.** The connect started in a browser on a compliant, Entra-joined Mac. Every later token on that session carried the Mac's device claims, including the ones the vendor's Linux servers redeemed. A compliant-device policy shows where a session started, not where its tokens are used.
+
+**Change.** A Conditional Access policy that blocks the admin account from the connector's server app. Conditional Access does apply to administrators. The policy simulator lists it as applying with Block access. I have not yet repeated the connect to see it refuse live.
+
+**Residual risk, recorded.** The break-glass accounts are Global Administrators excluded from every policy, so neither assignment nor the new block stops them. Accepted, as the recovery path. The daily account can still authorise the connector from an unmanaged machine, since no device policy targets the server app.
+
+**Lessons.** A deny test only counts if the test account is subject to the control. Restrict administrators with Conditional Access, not assignment. When an expected failure succeeds, that is the finding: contain it, then read the logs.
+
+## 29. A retired mailbox still trying to sign in
+
+**Symptom.** A non-interactive sign-in export showed the NAS's old alert mailbox failing token refresh every morning at 04:00, from home, with the user agent "Synology". My notes said nothing had tried to use that mailbox for weeks, and its app grant had been deleted.
+
+**What I checked.** The NAS's cron table had one 04:00 entry, a scheduled task. That task was an rsync job pulling from a VPS retired three weeks earlier. It failed every night, and each failure made the NAS try to send a notification through the retired mail sender, which tried its dead token.
+
+**Change.** Deleted the task. The NAS's alerts already go through Synology's own notification service. Its last copy of the old VPS's files, 3 MB, is still to be archived or deleted.
+
+**Also caught.** While cleaning up in Entra, I nearly deleted the NAS's single sign-on app registration, which has a similar name. I stopped before saving. Check an object's app ID before deleting it, not its name.
+
+**Lesson.** Sign-in logs for a retired account can point to a stale job on another machine. When decommissioning a server, search every machine's schedulers for jobs that call it.

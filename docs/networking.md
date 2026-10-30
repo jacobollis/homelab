@@ -217,7 +217,7 @@ Tailscale connects owned devices, infrastructure and a few untrusted VMs. The po
 | `autogroup:member` | My personal devices, untagged |
 | `tag:infra` | Proxmox host, NAS, llm01, monitoring and task containers |
 | `tag:untrusted` | work01 and edit01, the VMs where I browse and install desktop software |
-| `tag:exit-node` | Four self-hosted exit nodes on European VPS providers, one in Norway for a Norwegian IP |
+| `tag:exit-node` | Three self-hosted exit nodes on European VPS providers, one in Norway for a Norwegian IP |
 
 ### Grants
 

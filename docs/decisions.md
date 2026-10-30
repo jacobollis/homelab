@@ -170,7 +170,7 @@ Under Platform SSO, a second Entra account in the same macOS user signs in as an
 
 ## A Norwegian exit node, bought for its IP
 
-An exit node is where traffic leaves the tailnet, so a distant one adds a detour for anything near home. The reason to have one in Norway is a Norwegian IP, for geo-restricted Norwegian TV used for language study. It replaces the Finnish exit node rather than adding a fourth for good. I bought it from the datacentre operator, not from a country-named reseller of the same servers, because an exit node's value depends on the provider's IP reputation. [Case study 23](case-studies.md#23-an-exit-node-bought-for-its-ip-and-an-ssh-rule-that-did-nothing).
+An exit node is where traffic leaves the tailnet, so a distant one adds a detour for anything near home. The reason to have one in Norway is a Norwegian IP, for geo-restricted Norwegian TV used for language study. It replaced the Finnish exit node, which was retired a week later. I bought it from the datacentre operator, not from a country-named reseller of the same servers, because an exit node's value depends on the provider's IP reputation. [Case study 23](case-studies.md#23-an-exit-node-bought-for-its-ip-and-an-ssh-rule-that-did-nothing).
 
 ## Device join rights go to a named group
 
@@ -191,3 +191,11 @@ A server-side connector can never present a device, so a device policy can never
 ## The old Mac's keys were revoked before the erase
 
 Each host's `authorized_keys` was edited from the new Mac, one line at a time, by fingerprint, with a dated backup and a second login proved after each change. The exit nodes now hold no SSH keys at all, so the only way in is Tailscale SSH under the narrow grant, plus each provider's console. GitHub lists one key, the new Mac's.
+
+## Administrators are restricted with Conditional Access, not assignment
+
+Assignment required does not apply to Global Administrators, so it cannot keep an admin account out of an app. A Conditional Access block on the app's server side does. The break-glass accounts stay outside both, as the recovery path. [Case study 28](case-studies.md#28-a-deny-test-that-passed-the-wrong-way).
+
+## Exit nodes are pinned, never chosen automatically
+
+The MacBook was found with automatic exit-node selection on, so Tailscale was choosing where its traffic left. An exit node changes the source address of every sign-in and the DNS path, so it is a deliberate setting: pinned to the UK exit on the MacBook, none on the Mac mini.

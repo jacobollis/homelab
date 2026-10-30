@@ -1,6 +1,6 @@
 # Roadmap
 
-Open faults, known gaps and next work, as of 28 October 2026. Listed in priority order within each group.
+Open faults, known gaps and next work, as of 30 October 2026. Listed in priority order within each group.
 
 ## Done since the last snapshot (12 October)
 
@@ -8,6 +8,10 @@ Open faults, known gaps and next work, as of 28 October 2026. Listed in priority
 - Zone-based firewall with a Lab zone and five policies, and the lab VM moved onto the Lab VLAN with every allow and deny path proved. [Networking](networking.md#zone-based-firewall-and-the-lab-vlan).
 - The gateway's mDNS proxy turned off after a capture showed it reflecting the estate into the lab. [Case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
 - IoT zone for the speaker pair, with app control on one port and the mDNS proxy scoped to two networks and one service. [Networking](networking.md#iot-zone-for-the-speaker-pair).
+- A connector deny test that passed for an administrator, traced to the Global Administrator exemption and closed with a Conditional Access block. [Case study 28](case-studies.md#28-a-deny-test-that-passed-the-wrong-way).
+- A retired mailbox's sign-in failures traced to a dead job on the NAS, and the job removed. [Case study 29](case-studies.md#29-a-retired-mailbox-still-trying-to-sign-in).
+- The Finnish exit node retired, the NAS's Tailscale client updated with its subnet route intact, the unused Intune licence cancelled.
+- Message relay rebuilt on the new Mac mini, and the Untrusted desktop's direct path to it proved after the gateway policy moved to its address.
 - Wake-on-LAN from power-off fixed: the firmware setting was off. [Case study 27](case-studies.md#27-wake-on-lan-that-my-notes-said-was-on).
 - A server-side Microsoft 365 connector admitted through Conditional Access with a vendor-range exclusion and a compensating policy, and the admin account moved to its own all-resources device policy. [Case study 26](case-studies.md#26-a-server-side-connector-blocked-by-a-device-policy).
 - The old MacBook retired: its SSH keys revoked on GitHub, the NAS and every exit node, its sync and tailnet entries removed, Activation Lock off, erased.
@@ -35,7 +39,7 @@ Open faults, known gaps and next work, as of 28 October 2026. Listed in priority
 
 ## Open faults
 
-- None open. Wake-on-LAN needs one more wake after a later shutdown to show it repeats.
+- None open.
 
 ## Gateway roadmap
 
@@ -67,14 +71,13 @@ Open faults, known gaps and next work, as of 28 October 2026. Listed in priority
 - A dedicated least-privilege NAS account for the work desktop's file share mount.
 - A NAS-only DNS token for its certificate renewals. The Proxmox host already has its own.
 - A dedicated Tailscale tag for the subnet router, so route auto-approval applies to it alone.
-- Retire the Finnish exit node once the Norwegian one has run a week, and update Tailscale on the other exit nodes and the NAS.
-- Cancel the admin account's unused Intune licence once its admin centres are proved to load without it after Microsoft's 48-hour window.
-- Prove the connector policy's seven-day re-authentication, and read how the connector's consent was granted.
+- Update Tailscale on the older exit nodes.
+- Prove the connector policy's seven-day re-authentication, prove the admin block refusing live, and decide whether the connector's write scopes are wanted.
 - Decide the admin account's roles: keep Global Administrator as a recorded decision, or narrow it, with Global Administrator kept on the break-glass accounts. A passkey and an authentication strength for admin roles either way.
 
 ## Lab work
 
-- The Mac mini was replaced too. Capture its build evidence before writing it up, rebuild the message relay on it, and point the Untrusted direct-path policy at its address.
+- The Mac mini was replaced too. Capture its Platform SSO, FileVault and sign-in evidence before writing up its build.
 - Give the work desktop its own Khoj key, with the plugin's settings file ignored by Syncthing first.
 - Restore the Windows Business plan on my account. The admin centre shows it saved, but the user's licence record has not changed since before the save.
 - Retention label: apply it once it propagates.
