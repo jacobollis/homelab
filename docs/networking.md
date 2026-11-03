@@ -39,6 +39,8 @@ flowchart LR
 
 Proof the DNS change took effect: a lookup through the gateway returned an address that only a NextDNS rewrite knows, and the NextDNS test endpoint reported DoH with the gateway's device name.
 
+The IPS blocks a burst of outbound SSH on port 22 as a scan, under signature 2003068. It dropped my own Git fetches from the Mac mini after a few in quick succession ([case study 30](case-studies.md#30-my-own-gateway-blocked-my-git-fetches-as-a-scan)). The signature stays on. Scripted Git uses GitHub's SSH host on port 443 instead.
+
 I checked that Tailscale still makes direct connections through double NAT with IPS blocking on. An owned device pinged an exit node directly, and a phone on mobile data loaded the Proxmox UI over the subnet route.
 
 ### Known constraint: the WAN link
@@ -231,12 +233,15 @@ Tailscale connects owned devices, infrastructure and a few untrusted VMs. The po
 | 6 | work01 | Mac mini | one TCP port | One desktop app to one relay service, scoped to two named hosts |
 | 7 | work01 | NAS | Syncthing | Vault sync from the work desktop |
 | 8 | members | `tag:exit-node` | TCP 22 | Tailscale SSH to the exit nodes, and nothing else on them |
+| 9 | members | Mac mini | TCP 443 | One small web app, published to the tailnet only over HTTPS. The container listens on localhost, so nothing on the LAN reaches it |
+| 10 | MacBook | Mac mini | TCP 22 | SSH for deploys to the Mac mini, from one named device only, so the phones get no SSH path |
 
 Design points:
 
 - **No grant lets infrastructure reach other infrastructure.** A compromised container cannot use the tailnet to move sideways. This has a cost I accept: the monitoring container cannot reach the NAS by its tailnet address, so its certificate probe resolves the NAS through a local hosts entry instead.
 - **Untrusted VMs get internet only,** plus two grants scoped to named hosts. On the LAN they sit in the matching Untrusted firewall zone, which allows Tailscale packets only to the same two hosts. Grants 6 and 7 use aliases in the policy's `hosts` block mapped to stable tailnet addresses, rather than tags.
 - **work01 stays tagged on purpose.** Untagged, it would join `autogroup:member` and gain full reach into infrastructure under grant 1. A Tailscale device loses member status the moment it carries any tag, so tagging is how its reach is cut down.
+- **My own devices cannot reach each other** except through grants 9 and 10, each scoped to one destination and one port.
 - **No auth keys or API tokens exist** on the tailnet.
 - **Key expiry is on for personal devices,** so a lost device stops working without manual removal. It is off for tagged infrastructure and for one always-on server, by decision.
 - During the renumber, the new subnet route was added beside the old one in the grant and the auto-approver, and the old one removed only after every check passed.

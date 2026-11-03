@@ -117,7 +117,7 @@ Synology DS1525+.
 - On its own UPS over USB, with DSM's UPS support enabled.
 - NFS exports are scoped to the single client address that uses each one.
 - Hub for Obsidian vault sync through Syncthing.
-- RAID 6 over five drives, Btrfs volume. Data scrubbing had never run when I first checked, so a drive rebuild would have been the first full read of some data in a year. It now runs monthly.
+- RAID 6 over five drives, Btrfs volume. Data scrubbing had never run when I first checked, so a drive rebuild would have been the first full read of some data in a year. The first full scrub, started by hand, completed in about six and a half hours with the pool healthy. It now runs monthly.
 - The volume is encrypted with DSM's key vault set to Local, so the NAS unlocks itself at boot. That protects drives that leave the box, not a stolen running unit. The recovery key is kept outside the NAS.
 - Remote shell on a non-default SSH port only. SFTP and rsync are off: an open port 22 that looked like SFTP turned out to be rsync's SSH transport, and nothing used it. No DDNS entry and no port forwards.
 - Let's Encrypt certificate issued and deployed by acme.sh with a DNS challenge. The deploy step creates a throwaway admin account for each run and deletes it afterwards, so no admin password is stored in the deploy config.

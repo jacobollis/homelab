@@ -434,3 +434,19 @@ The leaked key still sits in each old copy of the file and in backups. Ignored f
 **Also caught.** While cleaning up in Entra, I nearly deleted the NAS's single sign-on app registration, which has a similar name. I stopped before saving. Check an object's app ID before deleting it, not its name.
 
 **Lesson.** Sign-in logs for a retired account can point to a stale job on another machine. When decommissioning a server, search every machine's schedulers for jobs that call it.
+
+## 30. My own gateway blocked my Git fetches as a scan
+
+**Symptom.** I set up a deploy script on the Mac mini, run over SSH from the MacBook, that pulls a small app's release from GitHub and restarts its containers. The first run worked. The second hung at `git fetch`. Nothing had changed on the Mac mini in the five minutes between them.
+
+**What I checked.** From the Mac mini, a plain TCP test to GitHub on port 22 timed out, while GitHub on 443 and GitHub's SSH-over-HTTPS host on 443 both connected. So the network worked, and only one port was failing. A path that worked minutes earlier and now drops silently points at something on the path, not at keys or config. The gateway's log had two "Threat Detected and Blocked" events from the Mac mini to GitHub on port 22, five minutes apart. The signature was 2003068, "ET SCAN Potential SSH Scan OUTBOUND". A handful of fetches and SSH checks in a few minutes looked like a host scanning outward, and the IPS dropped it.
+
+**Change.** I left the signature on. It is the alert a compromised machine scanning outward would raise, and I would rather route around it than turn it off. The Mac mini's SSH config now sends GitHub traffic to GitHub's SSH host on port 443. I checked that host's key against GitHub's published fingerprint before trusting it. The script's Git SSH also got a 10-second connect timeout, so a blocked path fails fast instead of hanging. The third run fetched over 443, recreated the container, and it came up healthy. The MacBook is not exposed to the same rule while it uses the UK exit node, since its traffic leaves inside the tunnel.
+
+**Also caught.**
+
+- The first run reported success but changed nothing. With every build layer cached, `docker compose up -d --build` left the old container running on a bare image ID. The script now passes `--force-recreate`, and I check the container's created time after a deploy.
+- Remote Login on the Mac mini had no host keys until I generated them, so the first config test failed with `no hostkeys available`. Login is key-only for one user, and a forced password login was refused, which proves the setting rather than just reading it. The tailnet grant allows SSH to the Mac mini from the MacBook only.
+- I pasted an SSH config block into an interactive zsh prompt instead of into the file. zsh on macOS does not treat `#` as a comment there, and command lookup ignores case, so `HostName` ran `/bin/hostname`. It refused to rename the Mac without sudo. I checked all three of the Mac's names afterwards. Config now goes in with a heredoc.
+
+**Lesson.** When a connection that just worked starts timing out, read the gateway's security events before changing keys or config. A security control that blocks your own traffic is working. Route the legitimate traffic around it rather than switching it off.

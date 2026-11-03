@@ -1,9 +1,13 @@
 # Roadmap
 
-Open faults, known gaps and next work, as of 30 October 2026. Listed in priority order within each group.
+Open faults, known gaps and next work, as of 3 November 2026. Listed in priority order within each group.
 
 ## Done since the last snapshot (12 October)
 
+- The gateway's IPS found blocking my own Git fetches as an outbound SSH scan. The signature kept on and scripted Git moved to port 443. [Case study 30](case-studies.md#30-my-own-gateway-blocked-my-git-fetches-as-a-scan).
+- SSH into the Mac mini for deploys: key-only Remote Login for one user, reachable on the tailnet from the MacBook only, password login proved refused.
+- The NAS's first data scrub completed in about six and a half hours, pool healthy. The NAS certificate renewed on schedule. The firmware reads Power On when mains returns after a UPS shutdown.
+- The work desktop kept off the vault search service by design, since its firewall zone blocks that container.
 - UniFi Cloud Gateway in place, LAN renumbered, gateway hardening complete. [Case study 13](case-studies.md#13-renumbering-a-live-estate-behind-a-new-gateway).
 - Zone-based firewall with a Lab zone and five policies, and the lab VM moved onto the Lab VLAN with every allow and deny path proved. [Networking](networking.md#zone-based-firewall-and-the-lab-vlan).
 - The gateway's mDNS proxy turned off after a capture showed it reflecting the estate into the lab. [Case study 16](case-studies.md#16-the-gateway-announced-the-estate-into-the-lab).
@@ -53,15 +57,12 @@ Open faults, known gaps and next work, as of 30 October 2026. Listed in priority
 
 ## Monitoring and power
 
-1. Record the result and duration of the NAS's first data scrub, started by hand on 19 October. Monthly runs start in November.
-2. Check the next work01 archive lands near the desktop's used space, not hundreds of GiB.
-3. Check the NAS certificate renewal lands around 24 October. The expiry metric should read about 90 days afterwards.
-4. Check the BIOS setting that decides whether the host boots itself when the UPS restores power.
-5. Optional: test the full UPS shutdown path at a time the host would be off anyway.
-6. Build or delete the dead SMART exporter job.
-7. A DNS probe on the tenant domain's MX record, so a deleted record alerts.
-8. An expected-downtime design for the dead-man's switch.
-9. Rebuild the out-of-band kernel log path (netconsole) on the working NIC. It died with the old one.
+1. Check the next work01 archive lands near the desktop's used space, not hundreds of GiB.
+2. Optional: test the full UPS shutdown path at a time the host would be off anyway.
+3. Build or delete the dead SMART exporter job.
+4. A DNS probe on the tenant domain's MX record, so a deleted record alerts.
+5. An expected-downtime design for the dead-man's switch.
+6. Rebuild the out-of-band kernel log path (netconsole) on the working NIC. It died with the old one.
 
 ## Security hardening
 
@@ -78,7 +79,6 @@ Open faults, known gaps and next work, as of 30 October 2026. Listed in priority
 ## Lab work
 
 - The Mac mini was replaced too. Capture its Platform SSO, FileVault and sign-in evidence before writing up its build.
-- Give the work desktop its own Khoj key, with the plugin's settings file ignored by Syncthing first.
 - Restore the Windows Business plan on my account. The admin centre shows it saved, but the user's licence record has not changed since before the save.
 - Retention label: apply it once it propagates.
 - Sensitivity label: open the protected file in Word desktop as an outside identity to evidence the refusal.
@@ -87,6 +87,7 @@ Open faults, known gaps and next work, as of 30 October 2026. Listed in priority
 
 ## Infrastructure
 
+- Wake the Mac mini from sleep on demand through the NAS's wake command, with a whitelisted target, so services hosted on it can sleep overnight.
 - A cable run from the ISP router to replace the PowerLine link, if the household agrees. Two weeks of the gateway's outage and latency log is the evidence for asking.
 
 ## Repo

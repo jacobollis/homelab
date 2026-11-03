@@ -283,3 +283,14 @@ Operating principles from running this estate. Each one cost me time before I wr
 - **Check an object's ID before deleting it, not its name.**
 - **Check a node's live peers before retiring it.** An exit node with no active peers but your own session is safe to remove.
 - **Read a device's automatic settings.** Automatic exit-node selection was on without being chosen.
+
+## SSH on macOS and the gateway IPS
+
+- **A fresh macOS Remote Login has no host keys.** `sshd -t` fails with `no hostkeys available` until `sudo ssh-keygen -A` makes them.
+- **In `sshd_config.d` the first value wins.** Name a local file to sort before Apple's, and prove the result with `sudo sshd -T`, not by reading the file.
+- **Never paste comments, config or terminal output into an interactive zsh on macOS.** `#` is not a comment there, and command lookup ignores case, so `HostName` runs `/bin/hostname`. Write config with a heredoc.
+- **Check the prompt names the right machine before pasting.**
+- **A non-interactive SSH command gets a bare PATH.** A deploy script run over SSH sets its own.
+- **When a server offers a newer host key type, force the one you recorded** on the first connection, so the fingerprint shown is the one you checked on the server.
+- **A working connection that starts timing out points at the IPS.** Read the gateway's security events before touching keys or config.
+- **A cached `docker compose up -d --build` can leave the old container running.** Add `--force-recreate` when a deploy must restart, and check the created time.

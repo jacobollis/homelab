@@ -199,3 +199,11 @@ Assignment required does not apply to Global Administrators, so it cannot keep a
 ## Exit nodes are pinned, never chosen automatically
 
 The MacBook was found with automatic exit-node selection on, so Tailscale was choosing where its traffic left. An exit node changes the source address of every sign-in and the DNS path, so it is a deliberate setting: pinned to the UK exit on the MacBook, none on the Mac mini.
+
+## An IPS signature that blocked my own traffic stays on
+
+The gateway's outbound SSH scan signature dropped my Git fetches from the Mac mini. I kept it, because it is the alert a compromised host scanning outward would raise, and moved scripted Git to GitHub's SSH host on port 443. Suppressing it would have fixed one script and blinded the gateway to the real case. [Case study 30](case-studies.md#30-my-own-gateway-blocked-my-git-fetches-as-a-scan).
+
+## The Mac mini takes SSH through macOS Remote Login, from one device
+
+The Mac mini runs the standalone Tailscale app, which does not offer Tailscale SSH, so deploys use macOS Remote Login. Login is key-only, for one standard user, with root login off, set in a config file that sorts ahead of Apple's and proved with `sshd -T`. On the tailnet one grant allows it from the MacBook only. macOS also answers on the main LAN, since launchd owns the socket and the listen address cannot be narrowed, so key-only login is the control there.
